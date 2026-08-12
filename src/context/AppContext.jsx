@@ -5,8 +5,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-  const [activeRole, setActiveRole] = useState('public'); // 'public' | 'clerk' | 'owner'
-  const [currentUser, setCurrentUser] = useState({ id: 0, username: 'guest', name: 'Public Visitor', role: 'public' });
+  const [activeRole, setActiveRole] = useState(null); // null | 'clerk' | 'owner'
+  const [currentUser, setCurrentUser] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Cart State
@@ -68,71 +68,36 @@ export const AppProvider = ({ children }) => {
   // Auth Operations
   const loginUser = async (identifier, pin) => {
     try {
-      const matched = users.find(u => 
-        (u.pin === pin || pin === '1234' || pin === '0000' || pin === '5678') &&
-        (u.username?.toLowerCase() === identifier.toLowerCase() || 
-         u.role === identifier || 
-         u.name.toLowerCase().includes(identifier.toLowerCase()))
-      ) || users.find(u => u.pin === pin);
+      // Strict match: username must match exactly AND pin must match
+      const matched = users.find(u =>
+        u.username?.toLowerCase() === identifier.toLowerCase() &&
+        u.pin === pin
+      );
 
       if (matched) {
         setCurrentUser(matched);
         setIsLoggedIn(true);
+        // manager uses clerk POS view
         setActiveRole(matched.role === 'manager' ? 'clerk' : matched.role);
         setActiveModal(null);
-        showToast(`Welcome back, ${matched.name}! Logged in as ${matched.role.toUpperCase()}`);
+        showToast(`Welcome, ${matched.name}!`);
         return true;
       } else {
-        showToast('Invalid Username or PIN!', 'error');
+        showToast('Invalid username or PIN.', 'error');
         return false;
       }
     } catch (err) {
       console.error(err);
-      showToast('Login failed', 'error');
+      showToast('Login failed. Please try again.', 'error');
       return false;
     }
   };
 
-  const signUpUser = async ({ name, username, pin, role }) => {
-    try {
-      if (!name || !username || !pin) {
-        showToast('Please fill in all required fields!', 'error');
-        return false;
-      }
-
-      const existing = users.find(u => u.username?.toLowerCase() === username.toLowerCase());
-      if (existing) {
-        showToast(`Username "${username}" is already taken!`, 'error');
-        return false;
-      }
-
-      const newUser = {
-        name,
-        username: username.toLowerCase().trim(),
-        pin: pin.trim(),
-        role
-      };
-
-      const id = await db.users.add(newUser);
-      newUser.id = id;
-
-      setCurrentUser(newUser);
-      setIsLoggedIn(true);
-      setActiveRole(role === 'manager' ? 'clerk' : role);
-      setActiveModal(null);
-      showToast(`Account created! Welcome aboard, ${name}`);
-      return true;
-    } catch (err) {
-      console.error(err);
-      showToast('Registration failed', 'error');
-      return false;
-    }
-  };
 
   const logoutUser = () => {
     setIsLoggedIn(false);
-    setCurrentUser({ id: 0, name: 'Guest Visitor', role: 'public' });
-    setActiveRole('public');
+    setCurrentUser(null);
+    setActiveRole(null);
     showToast('Logged out successfully');
   };
 
@@ -307,19 +272,11 @@ export const AppProvider = ({ children }) => {
   };
 
   const switchRole = (role) => {
-    if (role === 'public') {
-      setActiveRole('public');
-      showToast('Switched to Storefront mode');
-      return;
-    }
-
     if (!isLoggedIn) {
       openAuthModal('login');
       return;
     }
-
     setActiveRole(role);
-    showToast(`Switched view to ${role.toUpperCase()} mode`);
   };
 
   return (
@@ -330,10 +287,7 @@ export const AppProvider = ({ children }) => {
       isLoggedIn,
       users,
       loginUser,
-      signUpUser,
       logoutUser,
-      authMode,
-      setAuthMode,
       openAuthModal,
       promptInstallPWA,
       canInstallPWA,

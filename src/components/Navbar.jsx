@@ -2,13 +2,11 @@ import React from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   Smartphone, 
-  Store, 
   ShoppingBag, 
   TrendingUp, 
   Shield, 
   Wifi, 
   WifiOff, 
-  UserCheck,
   User,
   Download,
   LogIn,
@@ -34,7 +32,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           
           {/* Logo & Store Branding */}
-          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => switchRole('public')}>
+          <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-md shadow-cyan-500/20 text-white font-bold">
               <Smartphone className="w-6 h-6" />
             </div>
@@ -51,57 +49,47 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Navigation Bar - Only show App tabs when user is authenticated */}
-          <nav className="flex items-center p-1 bg-slate-950/80 rounded-xl border border-slate-800">
-            <button
-              onClick={() => switchRole('public')}
-              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
-                activeRole === 'public'
-                  ? 'bg-slate-800 text-cyan-400 shadow-sm border border-slate-700'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-              }`}
-            >
-              <Store className="w-4 h-4" />
-              <span>Storefront</span>
-            </button>
+          {/* Navigation — only shown when logged in */}
+          {isLoggedIn && (
+            <nav className="flex items-center p-1 bg-slate-950/80 rounded-xl border border-slate-800">
+              {/* Clerk / Manager */}
+              {(currentUser.role === 'clerk' || currentUser.role === 'manager') && (
+                <button
+                  onClick={() => switchRole('clerk')}
+                  className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 relative ${
+                    activeRole === 'clerk'
+                      ? 'bg-cyan-600 text-white shadow-md shadow-cyan-600/30'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                  }`}
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                  <span>Counter POS</span>
+                  {cart.length > 0 && (
+                    <span className="ml-1 px-1.5 py-0.5 text-[10px] bg-emerald-500 text-slate-950 rounded-full font-bold">
+                      {cart.length}
+                    </span>
+                  )}
+                </button>
+              )}
 
-            {/* Authenticated Clerk View Link */}
-            {isLoggedIn && (currentUser.role === 'clerk' || currentUser.role === 'manager') && (
-              <button
-                onClick={() => switchRole('clerk')}
-                className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 relative ${
-                  activeRole === 'clerk'
-                    ? 'bg-cyan-600 text-white shadow-md shadow-cyan-600/30'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-                }`}
-              >
-                <ShoppingBag className="w-4 h-4" />
-                <span>Counter POS</span>
-                {cart.length > 0 && (
-                  <span className="ml-1 px-1.5 py-0.5 text-[10px] bg-emerald-500 text-slate-950 rounded-full font-bold">
-                    {cart.length}
-                  </span>
-                )}
-              </button>
-            )}
+              {/* Owner */}
+              {currentUser.role === 'owner' && (
+                <button
+                  onClick={() => switchRole('owner')}
+                  className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                    activeRole === 'owner'
+                      ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md shadow-orange-500/20'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                  }`}
+                >
+                  <TrendingUp className="w-4 h-4" />
+                  <span>Owner App</span>
+                </button>
+              )}
+            </nav>
+          )}
 
-            {/* Authenticated Owner View Link */}
-            {isLoggedIn && currentUser.role === 'owner' && (
-              <button
-                onClick={() => switchRole('owner')}
-                className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
-                  activeRole === 'owner'
-                    ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md shadow-orange-500/20'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-                }`}
-              >
-                <TrendingUp className="w-4 h-4" />
-                <span>Owner App</span>
-              </button>
-            )}
-          </nav>
-
-          {/* Right Section: Install App & Log In / Sign Up */}
+          {/* Right Section */}
           <div className="flex items-center space-x-2.5">
             {/* Install App Button */}
             <button
@@ -125,7 +113,7 @@ export default function Navbar() {
                 <>
                   <span className="w-2 h-2 rounded-full bg-amber-400"></span>
                   <WifiOff className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="text-amber-300 font-mono text-[11px]">Offline First</span>
+                  <span className="text-amber-300 font-mono text-[11px]">Offline</span>
                 </>
               )}
             </div>
