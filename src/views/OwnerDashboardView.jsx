@@ -123,8 +123,7 @@ export default function OwnerDashboardView() {
       <div className="px-4 pt-1 pb-3 border-b border-slate-800/80 bg-slate-950">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Owner Dashboard</p>
-            <button onClick={() => setShowBranchPicker(true)} className="flex items-center space-x-1 mt-0.5">
+            <button onClick={() => setShowBranchPicker(true)} className="flex items-center space-x-1 mt-1">
               <Building2 className="w-3.5 h-3.5 text-slate-400" />
               <span className="text-xs font-bold text-white">{BRANCHES.find(b => b.id === selectedBranch)?.name}</span>
               <ChevronRight className="w-3 h-3 text-slate-500 rotate-90" />
