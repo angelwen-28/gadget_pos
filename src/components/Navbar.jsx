@@ -12,8 +12,7 @@ import {
   User,
   Download,
   LogIn,
-  LogOut,
-  UserPlus
+  LogOut
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -52,7 +51,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Navigation Links */}
+          {/* Navigation Bar - Only show App tabs when user is authenticated */}
           <nav className="flex items-center p-1 bg-slate-950/80 rounded-xl border border-slate-800">
             <button
               onClick={() => switchRole('public')}
@@ -66,37 +65,43 @@ export default function Navbar() {
               <span>Storefront</span>
             </button>
 
-            <button
-              onClick={() => switchRole('clerk')}
-              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 relative ${
-                activeRole === 'clerk'
-                  ? 'bg-cyan-600 text-white shadow-md shadow-cyan-600/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-              }`}
-            >
-              <ShoppingBag className="w-4 h-4" />
-              <span className="hidden sm:inline">Counter POS</span>
-              {cart.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 text-[10px] bg-emerald-500 text-slate-950 rounded-full font-bold">
-                  {cart.length}
-                </span>
-              )}
-            </button>
+            {/* Authenticated Clerk View Link */}
+            {isLoggedIn && (currentUser.role === 'clerk' || currentUser.role === 'manager') && (
+              <button
+                onClick={() => switchRole('clerk')}
+                className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 relative ${
+                  activeRole === 'clerk'
+                    ? 'bg-cyan-600 text-white shadow-md shadow-cyan-600/30'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                }`}
+              >
+                <ShoppingBag className="w-4 h-4" />
+                <span>Counter POS</span>
+                {cart.length > 0 && (
+                  <span className="ml-1 px-1.5 py-0.5 text-[10px] bg-emerald-500 text-slate-950 rounded-full font-bold">
+                    {cart.length}
+                  </span>
+                )}
+              </button>
+            )}
 
-            <button
-              onClick={() => switchRole('owner')}
-              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
-                activeRole === 'owner'
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md shadow-orange-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-              }`}
-            >
-              <TrendingUp className="w-4 h-4" />
-              <span className="hidden sm:inline">Owner App</span>
-            </button>
+            {/* Authenticated Owner View Link */}
+            {isLoggedIn && currentUser.role === 'owner' && (
+              <button
+                onClick={() => switchRole('owner')}
+                className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                  activeRole === 'owner'
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md shadow-orange-500/20'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                }`}
+              >
+                <TrendingUp className="w-4 h-4" />
+                <span>Owner App</span>
+              </button>
+            )}
           </nav>
 
-          {/* Right Section: Install App & Staff Log In / Sign Up */}
+          {/* Right Section: Install App & Log In / Sign Up */}
           <div className="flex items-center space-x-2.5">
             {/* Install App Button */}
             <button
@@ -125,20 +130,20 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* User Auth Buttons in Top Navbar */}
+            {/* User Auth Section */}
             {isLoggedIn ? (
               <div className="flex items-center space-x-2 bg-slate-800/80 p-1.5 pl-3 rounded-xl border border-slate-700/60">
                 <div className="flex items-center space-x-2">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                    activeRole === 'owner' 
+                    currentUser.role === 'owner' 
                       ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
                       : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
                   }`}>
-                    {activeRole === 'owner' ? <Shield className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
+                    {currentUser.role === 'owner' ? <Shield className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
                   </div>
                   <div className="text-left hidden xl:block">
                     <p className="text-xs font-semibold text-slate-200 leading-none">{currentUser.name}</p>
-                    <p className="text-[10px] text-slate-400 capitalize">{currentUser.role || activeRole}</p>
+                    <p className="text-[10px] text-slate-400 capitalize">{currentUser.role} Mode</p>
                   </div>
                 </div>
 
@@ -151,23 +156,13 @@ export default function Navbar() {
                 </button>
               </div>
             ) : (
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => openAuthModal('login')}
-                  className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-extrabold shadow-md shadow-cyan-600/30 flex items-center space-x-1.5 transition-all"
-                >
-                  <LogIn className="w-4 h-4" />
-                  <span>Log In</span>
-                </button>
-
-                <button
-                  onClick={() => openAuthModal('signup')}
-                  className="hidden sm:flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition-all"
-                >
-                  <UserPlus className="w-4 h-4 text-amber-400" />
-                  <span>Sign Up</span>
-                </button>
-              </div>
+              <button
+                onClick={() => openAuthModal('login')}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-extrabold shadow-md shadow-cyan-600/30 flex items-center space-x-1.5 transition-all"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Log In</span>
+              </button>
             )}
 
           </div>
