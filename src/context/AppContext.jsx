@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { db, seedInitialData } from '../db/database';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { initSync, startRealtimeListeners, stopRealtimeListeners, pushToFirestore } from '../db/firestoreSync';
 
 const AppContext = createContext();
 
@@ -38,8 +39,17 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     seedInitialData();
 
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    // Start Firebase sync (pull remote → local, push local → remote, real-time listeners)
+    initSync();
+
+    const handleOnline = () => {
+      setIsOnline(true);
+      startRealtimeListeners(); // Resume real-time sync when back online
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      stopRealtimeListeners(); // Pause listeners when offline
+    };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -54,6 +64,7 @@ export const AppProvider = ({ children }) => {
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
     return () => {
+      stopRealtimeListeners();
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -254,13 +265,16 @@ export const AppProvider = ({ children }) => {
     try {
       const id = await db.transactions.add(tx);
       tx.id = id;
+      // Sync transaction to Firestore
+      pushToFirestore('transactions', tx);
 
       for (const item of cart) {
         const prod = await db.products.get(item.productId);
         if (prod) {
-          await db.products.update(item.productId, {
-            stock: Math.max(0, prod.stock - item.quantity)
-          });
+          const newStock = Math.max(0, prod.stock - item.quantity);
+          await db.products.update(item.productId, { stock: newStock });
+          // Sync updated product stock to Firestore
+          pushToFirestore('products', { ...prod, stock: newStock });
         }
 
         if (item.imeiSerial) {
@@ -272,7 +286,19 @@ export const AppProvider = ({ children }) => {
           }
         }
 
-        await db.stockLogs.add({
+        const stockLogId = await db.stockLogs.add({
+          timestamp: new Date().toISOString(),
+          type: 'stock_out',
+          productId: item.productId,
+          productName: item.name,
+          imeiSerial: item.imeiSerial || null,
+          quantity: item.quantity,
+          reason: 'Customer Sale',
+          clerkId: currentUser.id || 3
+        });
+        // Sync stock log to Firestore
+        pushToFirestore('stockLogs', {
+          id: stockLogId,
           timestamp: new Date().toISOString(),
           type: 'stock_out',
           productId: item.productId,
@@ -285,7 +311,17 @@ export const AppProvider = ({ children }) => {
       }
 
       if (paymentMethod === 'Cash') {
-        await db.cashLogs.add({
+        const cashLogId = await db.cashLogs.add({
+          timestamp: new Date().toISOString(),
+          type: 'in',
+          category: 'Sales Cash Collection',
+          amount: total,
+          notes: `Sales transaction ${txNo}`,
+          clerkId: currentUser.id || 3
+        });
+        // Sync cash log to Firestore
+        pushToFirestore('cashLogs', {
+          id: cashLogId,
           timestamp: new Date().toISOString(),
           type: 'in',
           category: 'Sales Cash Collection',
