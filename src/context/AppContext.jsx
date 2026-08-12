@@ -78,8 +78,12 @@ export const AppProvider = ({ children }) => {
       if (matched) {
         setCurrentUser(matched);
         setIsLoggedIn(true);
-        // all roles use the clerk POS view — no separate owner dashboard
-        setActiveRole('clerk');
+        // Redirect owners to owner dashboard, manager/clerk to clerk POS
+        if (matched.role === 'owner') {
+          setActiveRole('owner');
+        } else {
+          setActiveRole('clerk');
+        }
         setActiveModal(null);
         showToast(`Welcome back, ${matched.name}!`);
         return true;
