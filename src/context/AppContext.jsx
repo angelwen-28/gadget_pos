@@ -354,6 +354,55 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const addProduct = async (productData) => {
+    try {
+      const id = await db.products.add(productData);
+      const newProd = { ...productData, id };
+      pushToFirestore('products', newProd);
+      showToast(`Product ${productData.name} added!`, 'success');
+      return true;
+    } catch (err) {
+      console.error(err);
+      showToast('Error adding product', 'error');
+      return false;
+    }
+  };
+
+  const editProduct = async (id, updatedData) => {
+    try {
+      await db.products.update(id, updatedData);
+      const updatedProd = await db.products.get(id);
+      pushToFirestore('products', updatedProd);
+      showToast(`Product updated!`, 'success');
+      return true;
+    } catch (err) {
+      console.error(err);
+      showToast('Error updating product', 'error');
+      return false;
+    }
+  };
+
+  const deleteProduct = async (id) => {
+    try {
+      const prod = await db.products.get(id);
+      await db.products.delete(id);
+      // In Firestore sync we can delete or update
+      try {
+        const { db: firestore } = await import('../db/firebase');
+        const { doc, deleteDoc } = await import('firebase/firestore');
+        await deleteDoc(doc(firestore, 'products', id.toString()));
+      } catch (fe) {
+        console.warn("Could not sync deletion to Firestore:", fe);
+      }
+      showToast(`Product deleted!`, 'success');
+      return true;
+    } catch (err) {
+      console.error(err);
+      showToast('Error deleting product', 'error');
+      return false;
+    }
+  };
+
   const switchRole = (role) => {
     if (role === 'storefront') {
       setActiveRole('storefront');
@@ -408,6 +457,9 @@ export const AppProvider = ({ children }) => {
       total,
       change,
       checkoutTransaction,
+      addProduct,
+      editProduct,
+      deleteProduct,
       activeModal,
       setActiveModal,
       selectedTransaction,

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import MobileAppFrame from '../components/MobileAppFrame';
 import MobileAuthScreen from './MobileAuthScreen';
+import ProductManager from '../components/ProductManager';
 import { useApp } from '../context/AppContext';
 import {
   Search, Plus, Minus, Trash2, Barcode, CreditCard, Banknote,
@@ -64,6 +65,10 @@ export default function ClerkPosView() {
     { id: 'stock', icon: <PackagePlus className="w-5 h-5" />, label: 'Stock' },
     { id: 'cashlog', icon: <DollarSign className="w-5 h-5" />, label: 'Cash' },
   ];
+
+  if (currentUser?.role === 'manager') {
+    tabs.push({ id: 'catalog', icon: <Package className="w-5 h-5" />, label: 'Catalog' });
+  }
 
   return (
     <MobileAppFrame statusLabel="Counter POS Terminal — Clerk Mode" statusColor="cyan">
@@ -336,6 +341,11 @@ export default function ClerkPosView() {
       {/* ── CASH LOG SCREEN ── */}
       {activeTab === 'cashlog' && (
         <CashScreen currentUser={currentUser} showToast={showToast} />
+      )}
+
+      {/* ── PRODUCT CATALOG SCREEN ── */}
+      {activeTab === 'catalog' && currentUser?.role === 'manager' && (
+        <ProductManager />
       )}
 
       {/* Bottom Navigation */}

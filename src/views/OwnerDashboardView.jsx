@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import MobileAppFrame from '../components/MobileAppFrame';
 import MobileAuthScreen from './MobileAuthScreen';
+import ProductManager from '../components/ProductManager';
 import { useApp } from '../context/AppContext';
 import {
   TrendingUp, DollarSign, AlertTriangle, Package, Users,
@@ -111,6 +112,7 @@ export default function OwnerDashboardView() {
   const bottomTabs = [
     { id: 'home', icon: <Home className="w-5 h-5" />, label: 'Dashboard' },
     { id: 'sales', icon: <TrendingUp className="w-5 h-5" />, label: 'Sales' },
+    { id: 'catalog', icon: <Package className="w-5 h-5" />, label: 'Catalog' },
     { id: 'alerts', icon: <Bell className="w-5 h-5" />, label: 'Alerts', badge: unreadCount },
     { id: 'approvals', icon: <ShieldCheck className="w-5 h-5" />, label: 'Approve', badge: pendingApprovals.length },
     { id: 'customers', icon: <Users className="w-5 h-5" />, label: 'Customers' },
@@ -462,6 +464,11 @@ export default function OwnerDashboardView() {
             </button>
           ))}
         </div>
+      )}
+
+      {/* ── PRODUCT CATALOG SCREEN ── */}
+      {activeTab === 'catalog' && (
+        <ProductManager />
       )}
 
       {/* Bottom Navigation */}
