@@ -1,5 +1,4 @@
 import Dexie from 'dexie';
-import { pushToFirestore } from './firestoreSync';
 
 export const db = new Dexie('GadgetPosDB');
 
@@ -243,21 +242,16 @@ export async function seedInitialData() {
   console.log('Database seeded successfully!');
 }
 
-// Always runs on startup — ensures default accounts exist locally and in Firestore
-export async function seedDefaultUsers() {
-  const defaultUsers = [
-    { id: 1, email: 'owner@gadget.com', name: 'John Barro', role: 'owner', password: 'owner@gadget' },
-    { id: 2, email: 'manager@gadget.com', name: 'Sarah Miller', role: 'manager', password: 'manager@gadget' },
-    { id: 3, email: 'clerk@gadget.com', name: 'Alex Cruz', role: 'clerk', password: 'clerk@gadget' }
-  ];
+// Always runs on startup — ensures default accounts exist locally
+export const DEFAULT_USERS = [
+  { id: 1, email: 'owner@gadget.com', name: 'John Barro', role: 'owner', password: 'owner@gadget' },
+  { id: 2, email: 'manager@gadget.com', name: 'Sarah Miller', role: 'manager', password: 'manager@gadget' },
+  { id: 3, email: 'clerk@gadget.com', name: 'Alex Cruz', role: 'clerk', password: 'clerk@gadget' }
+];
 
-  for (const u of defaultUsers) {
-    await db.users.put(u); // put = insert or update
-    try {
-      await pushToFirestore('users', u); // sync to Firestore
-    } catch (e) {
-      console.warn(`Could not sync user ${u.email} to Firestore:`, e);
-    }
+export async function seedDefaultUsers() {
+  for (const u of DEFAULT_USERS) {
+    await db.users.put(u); // insert or update locally
   }
-  console.log('Default users synced to local DB and Firestore.');
+  console.log('Default users seeded to local DB.');
 }

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { db, seedInitialData, seedDefaultUsers } from '../db/database';
+import { db, seedInitialData, seedDefaultUsers, DEFAULT_USERS } from '../db/database';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { initSync, startRealtimeListeners, stopRealtimeListeners, pushToFirestore } from '../db/firestoreSync';
 
@@ -38,7 +38,10 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     seedInitialData();
-    seedDefaultUsers(); // Always sync default users on startup
+    // Seed users locally then push to Firestore (no circular dep here)
+    seedDefaultUsers().then(() => {
+      DEFAULT_USERS.forEach(u => pushToFirestore('users', u));
+    });
 
     // Start Firebase sync (pull remote → local, push local → remote, real-time listeners)
     initSync();
