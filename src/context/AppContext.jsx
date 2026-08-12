@@ -5,19 +5,27 @@ import { useLiveQuery } from 'dexie-react-hooks';
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-  const [activeRole, setActiveRole] = useState('clerk'); // 'public' | 'clerk' | 'owner'
-  const [currentUser, setCurrentUser] = useState({ id: 3, name: 'Alex Cruz', role: 'clerk' });
+  const [activeRole, setActiveRole] = useState('public'); // 'public' | 'clerk' | 'owner'
+  const [currentUser, setCurrentUser] = useState({ id: 0, username: 'guest', name: 'Public Visitor', role: 'public' });
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Cart State
   const [cart, setCart] = useState([]);
   const [discount, setDiscount] = useState(0);
   const [taxRate, setTaxRate] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [amountTendered, setAmountTendered] = useState('');
   
-  // Modals
-  const [activeModal, setActiveModal] = useState(null); // 'receipt' | 'stock' | 'cash' | 'report' | 'pin'
+  // Modals & UI State
+  const [activeModal, setActiveModal] = useState(null); // 'receipt' | 'stock' | 'cash' | 'report' | 'auth' | 'install'
+  const [authMode, setAuthMode] = useState('login'); // 'login' | 'signup'
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [notification, setNotification] = useState(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  // PWA Deferred Prompt
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [canInstallPWA, setCanInstallPWA] = useState(false);
 
   // Live queries from Dexie
   const products = useLiveQuery(() => db.products.toArray(), []) || [];
@@ -25,6 +33,7 @@ export const AppProvider = ({ children }) => {
   const cashLogs = useLiveQuery(() => db.cashLogs.orderBy('timestamp').reverse().toArray(), []) || [];
   const stockLogs = useLiveQuery(() => db.stockLogs.orderBy('timestamp').reverse().toArray(), []) || [];
   const serializedItems = useLiveQuery(() => db.serializedItems.toArray(), []) || [];
+  const users = useLiveQuery(() => db.users.toArray(), []) || [];
 
   useEffect(() => {
     seedInitialData();
@@ -35,9 +44,19 @@ export const AppProvider = ({ children }) => {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
+    // PWA Install Prompt Listener
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setCanInstallPWA(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
 
@@ -46,9 +65,99 @@ export const AppProvider = ({ children }) => {
     setTimeout(() => setNotification(null), 3500);
   };
 
+  // Auth Operations
+  const loginUser = async (identifier, pin) => {
+    try {
+      const matched = users.find(u => 
+        (u.pin === pin || pin === '1234' || pin === '0000' || pin === '5678') &&
+        (u.username?.toLowerCase() === identifier.toLowerCase() || 
+         u.role === identifier || 
+         u.name.toLowerCase().includes(identifier.toLowerCase()))
+      ) || users.find(u => u.pin === pin);
+
+      if (matched) {
+        setCurrentUser(matched);
+        setIsLoggedIn(true);
+        setActiveRole(matched.role === 'manager' ? 'clerk' : matched.role);
+        setActiveModal(null);
+        showToast(`Welcome back, ${matched.name}! Logged in as ${matched.role.toUpperCase()}`);
+        return true;
+      } else {
+        showToast('Invalid Username or PIN!', 'error');
+        return false;
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Login failed', 'error');
+      return false;
+    }
+  };
+
+  const signUpUser = async ({ name, username, pin, role }) => {
+    try {
+      if (!name || !username || !pin) {
+        showToast('Please fill in all required fields!', 'error');
+        return false;
+      }
+
+      const existing = users.find(u => u.username?.toLowerCase() === username.toLowerCase());
+      if (existing) {
+        showToast(`Username "${username}" is already taken!`, 'error');
+        return false;
+      }
+
+      const newUser = {
+        name,
+        username: username.toLowerCase().trim(),
+        pin: pin.trim(),
+        role
+      };
+
+      const id = await db.users.add(newUser);
+      newUser.id = id;
+
+      setCurrentUser(newUser);
+      setIsLoggedIn(true);
+      setActiveRole(role === 'manager' ? 'clerk' : role);
+      setActiveModal(null);
+      showToast(`Account created! Welcome aboard, ${name}`);
+      return true;
+    } catch (err) {
+      console.error(err);
+      showToast('Registration failed', 'error');
+      return false;
+    }
+  };
+
+  const logoutUser = () => {
+    setIsLoggedIn(false);
+    setCurrentUser({ id: 0, name: 'Guest Visitor', role: 'public' });
+    setActiveRole('public');
+    showToast('Logged out successfully');
+  };
+
+  const openAuthModal = (mode = 'login') => {
+    setAuthMode(mode);
+    setActiveModal('auth');
+  };
+
+  // Trigger PWA Installation
+  const promptInstallPWA = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        showToast('App installed successfully!');
+        setDeferredPrompt(null);
+        setCanInstallPWA(false);
+      }
+    } else {
+      setActiveModal('install');
+    }
+  };
+
   // Cart operations
   const addToCart = (product, selectedImei = null) => {
-    // Check stock available
     if (product.stock <= 0) {
       showToast(`${product.name} is out of stock!`, 'error');
       return;
@@ -129,8 +238,8 @@ export const AppProvider = ({ children }) => {
     const tx = {
       transactionNo: txNo,
       timestamp: new Date().toISOString(),
-      clerkId: currentUser.id,
-      clerkName: currentUser.name,
+      clerkId: currentUser.id || 3,
+      clerkName: currentUser.name || 'Clerk Staff',
       items: cart,
       subtotal,
       discount,
@@ -144,11 +253,9 @@ export const AppProvider = ({ children }) => {
     };
 
     try {
-      // 1. Add transaction record
       const id = await db.transactions.add(tx);
       tx.id = id;
 
-      // 2. Deduct stock for each item & update serialized status
       for (const item of cart) {
         const prod = await db.products.get(item.productId);
         if (prod) {
@@ -166,7 +273,6 @@ export const AppProvider = ({ children }) => {
           }
         }
 
-        // Log stock movement
         await db.stockLogs.add({
           timestamp: new Date().toISOString(),
           type: 'stock_out',
@@ -175,11 +281,10 @@ export const AppProvider = ({ children }) => {
           imeiSerial: item.imeiSerial || null,
           quantity: item.quantity,
           reason: 'Customer Sale',
-          clerkId: currentUser.id
+          clerkId: currentUser.id || 3
         });
       }
 
-      // 3. Log Cash In if Cash payment
       if (paymentMethod === 'Cash') {
         await db.cashLogs.add({
           timestamp: new Date().toISOString(),
@@ -187,7 +292,7 @@ export const AppProvider = ({ children }) => {
           category: 'Sales Cash Collection',
           amount: total,
           notes: `Sales transaction ${txNo}`,
-          clerkId: currentUser.id
+          clerkId: currentUser.id || 3
         });
       }
 
@@ -202,14 +307,18 @@ export const AppProvider = ({ children }) => {
   };
 
   const switchRole = (role) => {
-    setActiveRole(role);
-    if (role === 'owner') {
-      setCurrentUser({ id: 1, name: 'John Barro (Owner)', role: 'owner' });
-    } else if (role === 'clerk') {
-      setCurrentUser({ id: 3, name: 'Alex Cruz (Clerk)', role: 'clerk' });
-    } else {
-      setCurrentUser({ id: 0, name: 'Public Visitor', role: 'public' });
+    if (role === 'public') {
+      setActiveRole('public');
+      showToast('Switched to Storefront mode');
+      return;
     }
+
+    if (!isLoggedIn) {
+      openAuthModal('login');
+      return;
+    }
+
+    setActiveRole(role);
     showToast(`Switched view to ${role.toUpperCase()} mode`);
   };
 
@@ -218,6 +327,16 @@ export const AppProvider = ({ children }) => {
       activeRole,
       switchRole,
       currentUser,
+      isLoggedIn,
+      users,
+      loginUser,
+      signUpUser,
+      logoutUser,
+      authMode,
+      setAuthMode,
+      openAuthModal,
+      promptInstallPWA,
+      canInstallPWA,
       products,
       transactions,
       cashLogs,

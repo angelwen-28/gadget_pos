@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export default function StorefrontView() {
-  const { products, switchRole } = useApp();
+  const { products, switchRole, openAuthModal } = useApp();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -39,10 +39,10 @@ export default function StorefrontView() {
             <span><strong>Public Storefront View:</strong> Digital catalog and store locator for customers. All purchases & payments happen on-site at our store counter.</span>
           </div>
           <button 
-            onClick={() => switchRole('clerk')}
-            className="text-xs bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 px-3 py-1 rounded-full border border-cyan-500/30 transition font-semibold flex items-center space-x-1 shrink-0"
+            onClick={() => openAuthModal('login')}
+            className="text-xs bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 px-3.5 py-1.5 rounded-full border border-cyan-500/30 transition font-bold flex items-center space-x-1.5 shrink-0"
           >
-            <span>Clerk / Staff Login</span>
+            <span>Staff & Owner Log In</span>
             <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>

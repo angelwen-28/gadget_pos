@@ -8,7 +8,7 @@ db.version(1).stores({
   transactions: '++id, transactionNo, timestamp, clerkId, total, paymentMethod, status',
   cashLogs: '++id, timestamp, type, category, amount, clerkId', // type: 'in', 'out'
   stockLogs: '++id, timestamp, type, productId, imeiSerial, quantity, clerkId', // type: 'stock_in', 'stock_out', 'return', 'defective'
-  users: '++id, name, role, pin'
+  users: '++id, username, name, role, pin'
 });
 
 export async function seedInitialData() {
@@ -19,9 +19,9 @@ export async function seedInitialData() {
 
   // Users
   await db.users.bulkAdd([
-    { id: 1, name: 'John Barro (Owner)', role: 'owner', pin: '1234' },
-    { id: 2, name: 'Sarah Miller (Manager)', role: 'manager', pin: '5678' },
-    { id: 3, name: 'Alex Cruz (Clerk)', role: 'clerk', pin: '0000' }
+    { id: 1, username: 'owner', name: 'John Barro', role: 'owner', pin: '1234' },
+    { id: 2, username: 'manager', name: 'Sarah Miller', role: 'manager', pin: '5678' },
+    { id: 3, username: 'clerk', name: 'Alex Cruz', role: 'clerk', pin: '0000' }
   ]);
 
   // Initial Products

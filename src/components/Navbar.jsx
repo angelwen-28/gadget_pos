@@ -10,14 +10,27 @@ import {
   WifiOff, 
   UserCheck,
   User,
-  Sparkles
+  Download,
+  LogIn,
+  LogOut,
+  UserPlus
 } from 'lucide-react';
 
 export default function Navbar() {
-  const { activeRole, switchRole, currentUser, isOnline, cart } = useApp();
+  const { 
+    activeRole, 
+    switchRole, 
+    currentUser, 
+    isLoggedIn, 
+    logoutUser, 
+    openAuthModal, 
+    promptInstallPWA, 
+    isOnline, 
+    cart 
+  } = useApp();
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 shadow-lg shadow-black/20">
+    <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800/80 shadow-lg shadow-black/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
@@ -39,7 +52,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Role Navigation Switcher - One Unified App Concept */}
+          {/* Navigation Links */}
           <nav className="flex items-center p-1 bg-slate-950/80 rounded-xl border border-slate-800">
             <button
               onClick={() => switchRole('public')}
@@ -50,7 +63,7 @@ export default function Navbar() {
               }`}
             >
               <Store className="w-4 h-4" />
-              <span className="hidden sm:inline">Storefront</span>
+              <span>Storefront</span>
             </button>
 
             <button
@@ -62,7 +75,7 @@ export default function Navbar() {
               }`}
             >
               <ShoppingBag className="w-4 h-4" />
-              <span>Counter POS</span>
+              <span className="hidden sm:inline">Counter POS</span>
               {cart.length > 0 && (
                 <span className="ml-1 px-1.5 py-0.5 text-[10px] bg-emerald-500 text-slate-950 rounded-full font-bold">
                   {cart.length}
@@ -79,14 +92,24 @@ export default function Navbar() {
               }`}
             >
               <TrendingUp className="w-4 h-4" />
-              <span>Owner App</span>
+              <span className="hidden sm:inline">Owner App</span>
             </button>
           </nav>
 
-          {/* Right Status & User Badge */}
-          <div className="flex items-center space-x-3">
+          {/* Right Section: Install App & Staff Log In / Sign Up */}
+          <div className="flex items-center space-x-2.5">
+            {/* Install App Button */}
+            <button
+              onClick={promptInstallPWA}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 text-xs font-bold transition-all shadow-sm"
+              title="Install Mobile App on device"
+            >
+              <Download className="w-3.5 h-3.5 text-emerald-400 animate-bounce" />
+              <span className="hidden md:inline">Install App</span>
+            </button>
+
             {/* Sync Status Badge */}
-            <div className="hidden md:flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-slate-950 border border-slate-800 text-xs">
+            <div className="hidden lg:flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-slate-950 border border-slate-800 text-xs">
               {isOnline ? (
                 <>
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -102,22 +125,50 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* Current Active User Badge */}
-            <div className="flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/60">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                activeRole === 'owner' 
-                  ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
-                  : activeRole === 'clerk'
-                  ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                  : 'bg-slate-700 text-slate-300'
-              }`}>
-                {activeRole === 'owner' ? <Shield className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
+            {/* User Auth Buttons in Top Navbar */}
+            {isLoggedIn ? (
+              <div className="flex items-center space-x-2 bg-slate-800/80 p-1.5 pl-3 rounded-xl border border-slate-700/60">
+                <div className="flex items-center space-x-2">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                    activeRole === 'owner' 
+                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
+                      : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                  }`}>
+                    {activeRole === 'owner' ? <Shield className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
+                  </div>
+                  <div className="text-left hidden xl:block">
+                    <p className="text-xs font-semibold text-slate-200 leading-none">{currentUser.name}</p>
+                    <p className="text-[10px] text-slate-400 capitalize">{currentUser.role || activeRole}</p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={logoutUser}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
               </div>
-              <div className="text-left hidden lg:block">
-                <p className="text-xs font-semibold text-slate-200 leading-none">{currentUser.name}</p>
-                <p className="text-[10px] text-slate-400 capitalize">{activeRole} Mode</p>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => openAuthModal('login')}
+                  className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-extrabold shadow-md shadow-cyan-600/30 flex items-center space-x-1.5 transition-all"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>Log In</span>
+                </button>
+
+                <button
+                  onClick={() => openAuthModal('signup')}
+                  className="hidden sm:flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition-all"
+                >
+                  <UserPlus className="w-4 h-4 text-amber-400" />
+                  <span>Sign Up</span>
+                </button>
               </div>
-            </div>
+            )}
 
           </div>
 

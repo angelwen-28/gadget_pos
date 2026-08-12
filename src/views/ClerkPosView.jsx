@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import MobileAppFrame from '../components/MobileAppFrame';
+import MobileAuthScreen from './MobileAuthScreen';
 import { useApp } from '../context/AppContext';
 import {
   Search, Plus, Minus, Trash2, Barcode, CreditCard, Banknote,
   QrCode, Receipt, X, ShoppingCart, Package, DollarSign,
-  PackagePlus, Check, ChevronLeft, Home, LayoutGrid, ClipboardList
+  PackagePlus, Check, ChevronLeft, Home, LayoutGrid, ClipboardList, LogOut
 } from 'lucide-react';
 
 const CATEGORIES = ['All', 'Smartphones', 'Charging & Power', 'Audio', 'Cases & Protection'];
@@ -24,15 +25,18 @@ export default function ClerkPosView() {
     subtotal, total, change,
     checkoutTransaction,
     setActiveModal, showToast,
-    currentUser,
+    currentUser, isLoggedIn, logoutUser
   } = useApp();
 
   const [activeTab, setActiveTab] = useState('products'); // 'products' | 'cart' | 'stock' | 'cashlog'
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [imeiModal, setImeiModal] = useState(null); // { product, imeis }
-  const [stockScreen, setStockScreen] = useState(false);
-  const [cashScreen, setCashScreen] = useState(false);
+
+  // Auth Guard: If not logged in as Clerk/Manager, render MobileAuthScreen inside mobile app frame
+  if (!isLoggedIn || (currentUser.role !== 'clerk' && currentUser.role !== 'manager')) {
+    return <MobileAuthScreen targetRole="clerk" />;
+  }
 
   const filteredProducts = products.filter(p => {
     const matchesCat = selectedCategory === 'All' || p.category === selectedCategory;
@@ -64,7 +68,10 @@ export default function ClerkPosView() {
       <div className="px-4 pt-1 pb-3 flex items-center justify-between bg-slate-950 border-b border-slate-800/80">
         <div>
           <h1 className="text-sm font-extrabold text-white tracking-tight">Optima POS</h1>
-          <p className="text-[10px] text-slate-400">{currentUser.name}</p>
+          <p className="text-[10px] text-slate-400 font-medium flex items-center space-x-1">
+            <span>{currentUser.name}</span>
+            <span className="text-cyan-400">({currentUser.role || 'clerk'})</span>
+          </p>
         </div>
         <div className="flex items-center space-x-2">
           {cart.length > 0 && activeTab !== 'cart' && (
@@ -79,6 +86,15 @@ export default function ClerkPosView() {
               </span>
             </button>
           )}
+
+          <button
+            onClick={logoutUser}
+            title="Sign Out of POS"
+            className="p-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-rose-400 hover:border-rose-500/30 transition flex items-center space-x-1 text-[10px]"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline font-bold">Exit</span>
+          </button>
         </div>
       </div>
 

@@ -8,7 +8,9 @@ import ReceiptModal from './components/ReceiptModal';
 import StockLogModal from './components/StockLogModal';
 import CashLogModal from './components/CashLogModal';
 import ReportModal from './components/ReportModal';
-import { CheckCircle2, AlertCircle, Info } from 'lucide-react';
+import AuthModal from './components/AuthModal';
+import InstallAppModal from './components/InstallAppModal';
+import { CheckCircle2, AlertCircle } from 'lucide-react';
 
 function MainContent() {
   const { activeRole, activeModal, notification } = useApp();
@@ -46,6 +48,8 @@ function MainContent() {
       {activeModal === 'stock' && <StockLogModal />}
       {activeModal === 'cash' && <CashLogModal />}
       {activeModal === 'report' && <ReportModal />}
+      {activeModal === 'auth' && <AuthModal />}
+      {activeModal === 'install' && <InstallAppModal />}
     </div>
   );
 }

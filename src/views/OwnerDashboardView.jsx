@@ -1,12 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import MobileAppFrame from '../components/MobileAppFrame';
+import MobileAuthScreen from './MobileAuthScreen';
 import { useApp } from '../context/AppContext';
 import {
   TrendingUp, DollarSign, AlertTriangle, Package, Users,
   Bell, FileText, Download, Eye, CheckCircle, XCircle,
   ChevronRight, Activity, Banknote, BarChart2, ShieldCheck,
   ArrowUpRight, ArrowDownRight, Home, Building2, Star,
-  Layers, MoreHorizontal, Clock, Receipt
+  Layers, MoreHorizontal, Clock, Receipt, LogOut
 } from 'lucide-react';
 import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement,
@@ -28,7 +29,13 @@ const BRANCHES = [
 const BRANCH_SALES = { main: null, branch2: 48200, branch3: 11900 };
 
 export default function OwnerDashboardView() {
-  const { products, transactions, cashLogs, setActiveModal, setSelectedTransaction, showToast } = useApp();
+  const { products, transactions, cashLogs, setActiveModal, setSelectedTransaction, showToast, currentUser, isLoggedIn, logoutUser } = useApp();
+
+  // Auth Guard: If not logged in as Owner, render MobileAuthScreen inside mobile app frame
+  if (!isLoggedIn || currentUser.role !== 'owner') {
+    return <MobileAuthScreen targetRole="owner" />;
+  }
+
   const [activeTab, setActiveTab] = useState('home');
   const [selectedBranch, setSelectedBranch] = useState('main');
   const [showBranchPicker, setShowBranchPicker] = useState(false);
@@ -124,13 +131,16 @@ export default function OwnerDashboardView() {
             </button>
           </div>
           <div className="flex items-center space-x-2">
-            <button onClick={() => setActiveTab('alerts')} className="relative w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-300">
-              <Bell className="w-4.5 h-4.5" />
+            <button onClick={() => setActiveTab('alerts')} className="relative w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-300">
+              <Bell className="w-4 h-4" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 rounded-full text-[9px] font-extrabold text-white flex items-center justify-center">
                   {unreadCount}
                 </span>
               )}
+            </button>
+            <button onClick={logoutUser} title="Sign Out" className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-rose-400 transition">
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
