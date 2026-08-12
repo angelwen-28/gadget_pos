@@ -42,8 +42,8 @@ export default function Navbar() {
             onClick={() => switchRole('storefront')}
             className="flex items-center space-x-3 text-left focus:outline-none group"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-md shadow-cyan-500/20 text-white font-bold group-hover:scale-105 transition-transform">
-              <Smartphone className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-md shadow-cyan-500/20 group-hover:scale-105 transition-transform">
+              <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
             </div>
             <div>
               <div className="flex items-center space-x-2">

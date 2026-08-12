@@ -42,8 +42,8 @@ export default function MobileAuthScreen({ targetRole = 'clerk' }) {
         
         {/* Brand Header */}
         <div className="text-center pt-2 pb-4 space-y-2">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-xl shadow-cyan-500/30">
-            <Smartphone className="w-8 h-8" />
+          <div className="w-14 h-14 mx-auto rounded-2xl overflow-hidden shadow-xl shadow-cyan-500/30">
+            <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
           </div>
           <div>
             <h1 className="text-xl font-extrabold text-white tracking-tight">OPTIMA GADGETS</h1>
