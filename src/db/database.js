@@ -239,24 +239,21 @@ export async function seedInitialData() {
 
   await db.transactions.bulkAdd(sampleTransactions);
 
-  // Seed default users if table is empty
-  const userCount = await db.users.count();
-  if (userCount === 0) {
-    const defaultUsers = [
-      { id: 1, email: 'owner@mygadgetshop.com', name: 'John Barro', role: 'owner', password: 'owner123' },
-      { id: 2, email: 'manager@mygadgetshop.com', name: 'Sarah Miller', role: 'manager', password: 'manager123' },
-      { id: 3, email: 'clerk@mygadgetshop.com', name: 'Alex Cruz', role: 'clerk', password: 'clerk123' }
-    ];
-    await db.users.bulkAdd(defaultUsers);
-    
-    // Also push them to Firestore if online
+  // Seed default users (updates/adds to ensure new credentials are loaded)
+  const defaultUsers = [
+    { id: 1, email: 'owner@gadget.com', name: 'John Barro', role: 'owner', password: 'owner@gadget' },
+    { id: 2, email: 'manager@gadget.com', name: 'Sarah Miller', role: 'manager', password: 'manager@gadget' },
+    { id: 3, email: 'clerk@gadget.com', name: 'Alex Cruz', role: 'clerk', password: 'clerk@gadget' }
+  ];
+
+  for (const u of defaultUsers) {
+    await db.users.put(u);
+    // Also push to Firestore
     try {
       const { pushToFirestore } = await import('./firestoreSync');
-      for (const u of defaultUsers) {
-        await pushToFirestore('users', u);
-      }
+      await pushToFirestore('users', u);
     } catch (e) {
-      console.warn('Could not sync default users to Firestore:', e);
+      console.warn(`Could not sync user ${u.email} to Firestore:`, e);
     }
   }
 
