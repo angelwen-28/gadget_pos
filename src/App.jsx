@@ -9,7 +9,7 @@ import CashLogModal from './components/CashLogModal';
 import ReportModal from './components/ReportModal';
 import AuthModal from './components/AuthModal';
 import InstallAppModal from './components/InstallAppModal';
-import { CheckCircle2, AlertCircle, Smartphone, ShoppingBag, TrendingUp, LogIn, Download } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Smartphone, ShoppingBag, TrendingUp, LogIn, UserPlus, Download } from 'lucide-react';
 
 /* ─── Login Splash Screen (shown when not logged in) ─── */
 function LoginSplash() {
@@ -42,38 +42,47 @@ function LoginSplash() {
               <ShoppingBag className="w-5 h-5 text-cyan-400" />
             </div>
             <p className="text-xs font-bold text-slate-200">Counter Staff</p>
-            <p className="text-[11px] text-slate-500 leading-tight">POS sales & transactions</p>
+            <p className="text-[11px] text-slate-500 leading-tight font-medium">POS sales & transactions</p>
           </div>
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col items-center text-center space-y-2">
             <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-amber-400" />
             </div>
             <p className="text-xs font-bold text-slate-200">Store Owner</p>
-            <p className="text-[11px] text-slate-500 leading-tight">Dashboard & analytics</p>
+            <p className="text-[11px] text-slate-500 leading-tight font-medium">Dashboard & analytics</p>
           </div>
         </div>
 
-        {/* Login Button */}
-        <button
-          onClick={() => openAuthModal('login')}
-          className="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-extrabold text-sm shadow-xl shadow-cyan-500/25 hover:from-cyan-400 hover:to-blue-500 transition-all flex items-center justify-center space-x-2"
-        >
-          <LogIn className="w-5 h-5" />
-          <span>Sign In to Your Account</span>
-        </button>
+        {/* Buttons */}
+        <div className="space-y-3">
+          <button
+            onClick={() => openAuthModal('login')}
+            className="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-extrabold text-sm shadow-xl shadow-cyan-500/25 hover:from-cyan-400 hover:to-blue-500 transition-all flex items-center justify-center space-x-2"
+          >
+            <LogIn className="w-5 h-5" />
+            <span>Log In to Your Account</span>
+          </button>
 
-        {/* Install App */}
-        <button
-          onClick={promptInstallPWA}
-          className="w-full mt-3 py-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-emerald-500/40 text-slate-400 hover:text-emerald-300 font-bold text-xs transition-all flex items-center justify-center space-x-2"
-        >
-          <Download className="w-4 h-4" />
-          <span>Install App on This Device</span>
-        </button>
+          <button
+            onClick={() => openAuthModal('signup')}
+            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-extrabold text-sm shadow-lg shadow-orange-500/20 hover:from-amber-400 hover:to-orange-500 transition-all flex items-center justify-center space-x-2"
+          >
+            <UserPlus className="w-5 h-5" />
+            <span>Create New Account</span>
+          </button>
+
+          {/* Install App */}
+          <button
+            onClick={promptInstallPWA}
+            className="w-full py-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-emerald-500/40 text-slate-400 hover:text-emerald-300 font-bold text-xs transition-all flex items-center justify-center space-x-2"
+          >
+            <Download className="w-4 h-4" />
+            <span>Install App on This Device</span>
+          </button>
+        </div>
 
         <p className="text-center text-[11px] text-slate-600 mt-6">
-          Access restricted to authorized staff only.<br />
-          Contact the store owner to get your account credentials.
+          Sign in or create your custom owner & staff accounts.
         </p>
       </div>
     </div>

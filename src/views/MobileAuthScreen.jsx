@@ -4,63 +4,56 @@ import { useApp } from '../context/AppContext';
 import { 
   Smartphone, 
   Lock, 
+  Mail,
   User, 
-  ShieldCheck, 
   UserPlus, 
   LogIn, 
-  KeyRound, 
   AlertCircle,
-  Briefcase,
-  Store,
   ChevronRight
 } from 'lucide-react';
 
 export default function MobileAuthScreen({ targetRole = 'clerk' }) {
-  const { loginUser, signUpUser } = useApp();
+  const { loginUser, signUpUser, users } = useApp();
 
-  const [mode, setMode] = useState('login'); // 'login' | 'signup'
-  const [identifier, setIdentifier] = useState(targetRole);
-  const [pin, setPin] = useState('');
+  const [mode, setMode] = useState(users.length === 0 ? 'signup' : 'login'); // 'login' | 'signup'
+  
+  // Login State
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
   // Sign Up State
   const [name, setName] = useState('');
-  const [username, setUsername] = useState('');
-  const [signUpPin, setSignUpPin] = useState('');
+  const [signUpEmail, setSignUpEmail] = useState('');
+  const [signUpPassword, setSignUpPassword] = useState('');
   const [role, setRole] = useState(targetRole);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setErrorMsg('');
-    if (!pin) {
-      setErrorMsg('Please enter your 4-digit PIN');
+    if (!email.trim() || !password) {
+      setErrorMsg('Please enter email and password');
       return;
     }
 
-    const success = await loginUser(identifier || targetRole, pin);
+    const success = await loginUser(email.trim(), password);
     if (!success) {
-      setErrorMsg('Invalid Username or PIN!');
+      setErrorMsg('Invalid email or password!');
     }
   };
 
   const handleSignUp = async (e) => {
     e.preventDefault();
     setErrorMsg('');
-    if (!name || !username || !signUpPin) {
+    if (!name.trim() || !signUpEmail.trim() || !signUpPassword) {
       setErrorMsg('Please fill in all fields');
       return;
     }
 
-    const success = await signUpUser({ name, username, pin: signUpPin, role });
+    const success = await signUpUser({ name, email: signUpEmail, password: signUpPassword, role });
     if (!success) {
-      setErrorMsg('Registration failed. Username may be taken.');
+      setErrorMsg('Registration failed. Email may already exist.');
     }
-  };
-
-  const quickDemoLogin = async (demoUsername, demoPin) => {
-    setIdentifier(demoUsername);
-    setPin(demoPin);
-    await loginUser(demoUsername, demoPin);
   };
 
   return (
@@ -125,33 +118,34 @@ export default function MobileAuthScreen({ targetRole = 'clerk' }) {
           <form onSubmit={handleLogin} className="space-y-4 my-2">
             <div>
               <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">
-                Staff Username / Role
+                Email Address
               </label>
               <div className="relative">
-                <User className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
                 <input
-                  type="text"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="clerk or owner"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-9 pr-3 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-500 font-mono"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="e.g. staff@mygadgetshop.com"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-9 pr-3 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-500"
                 />
               </div>
             </div>
 
             <div>
               <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">
-                4-Digit Security PIN
+                Password
               </label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
                 <input
                   type="password"
-                  maxLength={6}
-                  value={pin}
-                  onChange={(e) => setPin(e.target.value)}
-                  placeholder="0000 or 1234"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-9 pr-3 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500 font-mono tracking-widest"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter password"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-9 pr-3 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-500"
                 />
               </div>
             </div>
@@ -163,32 +157,6 @@ export default function MobileAuthScreen({ targetRole = 'clerk' }) {
               <span>Authenticate & Enter App</span>
               <ChevronRight className="w-4 h-4" />
             </button>
-
-            {/* Quick Demo Buttons */}
-            <div className="pt-3 border-t border-slate-800/80 space-y-2">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">
-                Tap to Quick-Test Logins
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => quickDemoLogin('clerk', '0000')}
-                  className="p-2.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-left transition hover:bg-cyan-500/20"
-                >
-                  <p className="text-[11px] font-bold text-cyan-300">Counter Clerk</p>
-                  <p className="text-[9px] text-cyan-400/80 font-mono">PIN: 0000</p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => quickDemoLogin('owner', '1234')}
-                  className="p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-left transition hover:bg-amber-500/20"
-                >
-                  <p className="text-[11px] font-bold text-amber-300">Store Owner</p>
-                  <p className="text-[9px] text-amber-400/80 font-mono">PIN: 1234</p>
-                </button>
-              </div>
-            </div>
           </form>
         ) : (
           /* Sign Up Form */
@@ -212,17 +180,17 @@ export default function MobileAuthScreen({ targetRole = 'clerk' }) {
 
             <div>
               <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">
-                Username
+                Email Address
               </label>
               <div className="relative">
-                <KeyRound className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
                 <input
-                  type="text"
+                  type="email"
                   required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="e.g. maria_pos"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500 font-mono"
+                  value={signUpEmail}
+                  onChange={(e) => setSignUpEmail(e.target.value)}
+                  placeholder="e.g. maria@mygadgetshop.com"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
                 />
               </div>
             </div>
@@ -230,7 +198,7 @@ export default function MobileAuthScreen({ targetRole = 'clerk' }) {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">
-                  Account Role
+                  Role
                 </label>
                 <select
                   value={role}
@@ -245,16 +213,15 @@ export default function MobileAuthScreen({ targetRole = 'clerk' }) {
 
               <div>
                 <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">
-                  Create PIN
+                  Password
                 </label>
                 <input
                   type="password"
                   required
-                  maxLength={6}
-                  value={signUpPin}
-                  onChange={(e) => setSignUpPin(e.target.value)}
-                  placeholder="4 digits"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-2xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500 font-mono tracking-widest text-center"
+                  value={signUpPassword}
+                  onChange={(e) => setSignUpPassword(e.target.value)}
+                  placeholder="Password"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-2xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
                 />
               </div>
             </div>
@@ -264,7 +231,7 @@ export default function MobileAuthScreen({ targetRole = 'clerk' }) {
               className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-extrabold text-xs shadow-lg shadow-orange-500/25 active:scale-[0.98] transition flex items-center justify-center space-x-2"
             >
               <UserPlus className="w-4 h-4" />
-              <span>Create Staff Account & Log In</span>
+              <span>Create Account & Log In</span>
             </button>
           </form>
         )}

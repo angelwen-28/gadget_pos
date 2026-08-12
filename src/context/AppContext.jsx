@@ -68,9 +68,10 @@ export const AppProvider = ({ children }) => {
   // Auth Operations
   const loginUser = async (email, password) => {
     try {
+      const cleanEmail = email.trim().toLowerCase();
       // Strict match: email must match exactly (case-insensitive) AND password must match
       const matched = users.find(u =>
-        u.email?.toLowerCase() === email.toLowerCase() &&
+        u.email?.toLowerCase() === cleanEmail &&
         u.password === password
       );
 
@@ -80,7 +81,7 @@ export const AppProvider = ({ children }) => {
         // manager uses clerk POS view
         setActiveRole(matched.role === 'manager' ? 'clerk' : matched.role);
         setActiveModal(null);
-        showToast(`Welcome, ${matched.name}!`);
+        showToast(`Welcome back, ${matched.name}!`);
         return true;
       } else {
         showToast('Invalid email or password.', 'error');
@@ -93,6 +94,35 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const signUpUser = async ({ name, email, role = 'owner', password }) => {
+    try {
+      const cleanEmail = email.trim().toLowerCase();
+      const existing = users.find(u => u.email?.toLowerCase() === cleanEmail);
+      if (existing) {
+        showToast('An account with this email already exists.', 'error');
+        return false;
+      }
+
+      const id = await db.users.add({
+        name: name.trim(),
+        email: cleanEmail,
+        role,
+        password
+      });
+
+      const newUser = { id, name: name.trim(), email: cleanEmail, role, password };
+      setCurrentUser(newUser);
+      setIsLoggedIn(true);
+      setActiveRole(role === 'manager' ? 'clerk' : role);
+      setActiveModal(null);
+      showToast(`Account created! Welcome, ${newUser.name}!`);
+      return true;
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to create account.', 'error');
+      return false;
+    }
+  };
 
   const logoutUser = () => {
     setIsLoggedIn(false);
@@ -287,7 +317,9 @@ export const AppProvider = ({ children }) => {
       isLoggedIn,
       users,
       loginUser,
+      signUpUser,
       logoutUser,
+      authMode,
       openAuthModal,
       promptInstallPWA,
       canInstallPWA,

@@ -25,28 +25,7 @@ db.version(2).stores({
   console.log('Upgraded users table to email/password schema');
 });
 
-const defaultUsers = [
-  { id: 1, email: 'owner@optimagadgets.com', name: 'John Barro', role: 'owner', password: 'owner1234' },
-  { id: 2, email: 'manager@optimagadgets.com', name: 'Sarah Miller', role: 'manager', password: 'manager5678' },
-  { id: 3, email: 'clerk@optimagadgets.com', name: 'Alex Cruz', role: 'clerk', password: 'clerk0000' }
-];
-
 export async function seedInitialData() {
-  // Always ensure users have the new email/password schema
-  const userCount = await db.users.count();
-  if (userCount === 0) {
-    await db.users.bulkAdd(defaultUsers);
-    console.log('Users seeded with email/password credentials');
-  } else {
-    // Check if existing users still use old schema (have pin instead of email)
-    const firstUser = await db.users.toCollection().first();
-    if (firstUser && !firstUser.email) {
-      await db.users.clear();
-      await db.users.bulkAdd(defaultUsers);
-      console.log('Migrated users from pin/username to email/password');
-    }
-  }
-
   const count = await db.products.count();
   if (count > 0) return; // products already seeded
 
