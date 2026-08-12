@@ -2,13 +2,13 @@ import Dexie from 'dexie';
 
 export const db = new Dexie('GadgetPosDB');
 
-db.version(1).stores({
+db.version(2).stores({
   products: '++id, sku, name, category, brand, isSerialized, price, cost, stock',
   serializedItems: '++id, productId, imeiSerial, status', // status: 'available', 'sold', 'defective'
   transactions: '++id, transactionNo, timestamp, clerkId, total, paymentMethod, status',
   cashLogs: '++id, timestamp, type, category, amount, clerkId', // type: 'in', 'out'
   stockLogs: '++id, timestamp, type, productId, imeiSerial, quantity, clerkId', // type: 'stock_in', 'stock_out', 'return', 'defective'
-  users: '++id, username, name, role, pin'
+  users: '++id, email, name, role, password'
 });
 
 export async function seedInitialData() {
@@ -19,9 +19,9 @@ export async function seedInitialData() {
 
   // Users
   await db.users.bulkAdd([
-    { id: 1, username: 'owner', name: 'John Barro', role: 'owner', pin: '1234' },
-    { id: 2, username: 'manager', name: 'Sarah Miller', role: 'manager', pin: '5678' },
-    { id: 3, username: 'clerk', name: 'Alex Cruz', role: 'clerk', pin: '0000' }
+    { id: 1, email: 'owner@optimagadgets.com', name: 'John Barro', role: 'owner', password: 'owner1234' },
+    { id: 2, email: 'manager@optimagadgets.com', name: 'Sarah Miller', role: 'manager', password: 'manager5678' },
+    { id: 3, email: 'clerk@optimagadgets.com', name: 'Alex Cruz', role: 'clerk', password: 'clerk0000' }
   ]);
 
   // Initial Products

@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { 
   X, 
   Lock, 
-  User, 
+  Mail,
   LogIn, 
   Smartphone,
   AlertCircle,
@@ -14,9 +14,9 @@ import {
 export default function AuthModal() {
   const { setActiveModal, loginUser } = useApp();
 
-  const [identifier, setIdentifier] = useState('');
-  const [pin, setPin] = useState('');
-  const [showPin, setShowPin] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -24,22 +24,22 @@ export default function AuthModal() {
     e.preventDefault();
     setErrorMsg('');
 
-    if (!identifier.trim()) {
-      setErrorMsg('Please enter your username or email.');
+    if (!email.trim()) {
+      setErrorMsg('Please enter your email address.');
       return;
     }
-    if (!pin) {
-      setErrorMsg('Please enter your PIN.');
+    if (!password) {
+      setErrorMsg('Please enter your password.');
       return;
     }
 
     setLoading(true);
-    const success = await loginUser(identifier.trim(), pin);
+    const success = await loginUser(email.trim(), password);
     setLoading(false);
 
     if (!success) {
-      setErrorMsg('Invalid username or PIN. Please try again.');
-      setPin('');
+      setErrorMsg('Invalid email or password. Please try again.');
+      setPassword('');
     }
   };
 
@@ -75,47 +75,46 @@ export default function AuthModal() {
           )}
 
           <form onSubmit={handleLoginSubmit} className="space-y-4">
-            {/* Username */}
+            {/* Email */}
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                Username
+                Email Address
               </label>
               <div className="relative">
-                <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
-                  type="text"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="Enter your username"
-                  autoComplete="username"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@optimagadgets.com"
+                  autoComplete="email"
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
                 />
               </div>
             </div>
 
-            {/* PIN */}
+            {/* Password */}
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                PIN
+                Password
               </label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
-                  type={showPin ? 'text' : 'password'}
-                  maxLength={8}
-                  value={pin}
-                  onChange={(e) => setPin(e.target.value.replace(/\D/, ''))}
-                  placeholder="Enter your PIN"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
                   autoComplete="current-password"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-12 py-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all font-mono tracking-widest"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-12 py-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPin(!showPin)}
+                  onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
                   tabIndex={-1}
                 >
-                  {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>

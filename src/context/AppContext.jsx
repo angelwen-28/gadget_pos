@@ -66,12 +66,12 @@ export const AppProvider = ({ children }) => {
   };
 
   // Auth Operations
-  const loginUser = async (identifier, pin) => {
+  const loginUser = async (email, password) => {
     try {
-      // Strict match: username must match exactly AND pin must match
+      // Strict match: email must match exactly (case-insensitive) AND password must match
       const matched = users.find(u =>
-        u.username?.toLowerCase() === identifier.toLowerCase() &&
-        u.pin === pin
+        u.email?.toLowerCase() === email.toLowerCase() &&
+        u.password === password
       );
 
       if (matched) {
@@ -83,7 +83,7 @@ export const AppProvider = ({ children }) => {
         showToast(`Welcome, ${matched.name}!`);
         return true;
       } else {
-        showToast('Invalid username or PIN.', 'error');
+        showToast('Invalid email or password.', 'error');
         return false;
       }
     } catch (err) {
