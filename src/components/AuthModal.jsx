@@ -56,9 +56,9 @@ export default function AuthModal() {
             <X className="w-4 h-4" />
           </button>
 
-          {/* Icon */}
-          <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-xl shadow-cyan-500/30 mb-3">
-            <Smartphone className="w-7 h-7" />
+          {/* Logo */}
+          <div className="mx-auto w-16 h-16 rounded-2xl overflow-hidden shadow-xl shadow-cyan-500/30 mb-3">
+            <img src="/logo.png" alt="GadgetPOS Logo" className="w-full h-full object-cover" />
           </div>
 
           <h2 className="text-xl font-black text-white tracking-tight">OPTIMA GADGETS</h2>
