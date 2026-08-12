@@ -10,7 +10,8 @@ import {
   User,
   Download,
   LogIn,
-  LogOut
+  LogOut,
+  Store
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -32,8 +33,11 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           
           {/* Logo & Store Branding */}
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-md shadow-cyan-500/20 text-white font-bold">
+          <button 
+            onClick={() => switchRole('storefront')}
+            className="flex items-center space-x-3 text-left focus:outline-none group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-md shadow-cyan-500/20 text-white font-bold group-hover:scale-105 transition-transform">
               <Smartphone className="w-6 h-6" />
             </div>
             <div>
@@ -47,47 +51,56 @@ export default function Navbar() {
               </div>
               <p className="text-xs text-slate-400 font-medium">Phones, Accessories & Repairs</p>
             </div>
-          </div>
+          </button>
 
-          {/* Navigation — only shown when logged in */}
-          {isLoggedIn && (
-            <nav className="flex items-center p-1 bg-slate-950/80 rounded-xl border border-slate-800">
-              {/* Clerk / Manager */}
-              {(currentUser.role === 'clerk' || currentUser.role === 'manager') && (
-                <button
-                  onClick={() => switchRole('clerk')}
-                  className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 relative ${
-                    activeRole === 'clerk'
-                      ? 'bg-cyan-600 text-white shadow-md shadow-cyan-600/30'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-                  }`}
-                >
-                  <ShoppingBag className="w-4 h-4" />
-                  <span>Counter POS</span>
-                  {cart.length > 0 && (
-                    <span className="ml-1 px-1.5 py-0.5 text-[10px] bg-emerald-500 text-slate-950 rounded-full font-bold">
-                      {cart.length}
-                    </span>
-                  )}
-                </button>
-              )}
+          {/* Navigation Bar */}
+          <nav className="flex items-center p-1 bg-slate-950/80 rounded-xl border border-slate-800">
+            {/* Storefront Tab (Always Available) */}
+            <button
+              onClick={() => switchRole('storefront')}
+              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                activeRole === 'storefront'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <Store className="w-4 h-4" />
+              <span className="hidden sm:inline">Storefront</span>
+            </button>
 
-              {/* Owner */}
-              {currentUser.role === 'owner' && (
-                <button
-                  onClick={() => switchRole('owner')}
-                  className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
-                    activeRole === 'owner'
-                      ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md shadow-orange-500/20'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-                  }`}
-                >
-                  <TrendingUp className="w-4 h-4" />
-                  <span>Owner App</span>
-                </button>
+            {/* Counter POS */}
+            <button
+              onClick={() => switchRole('clerk')}
+              className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 relative ${
+                activeRole === 'clerk'
+                  ? 'bg-cyan-600 text-white shadow-md shadow-cyan-600/30'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`}
+            >
+              <ShoppingBag className="w-4 h-4" />
+              <span className="hidden sm:inline">Counter POS</span>
+              {cart.length > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 text-[10px] bg-emerald-500 text-slate-950 rounded-full font-bold">
+                  {cart.length}
+                </span>
               )}
-            </nav>
-          )}
+            </button>
+
+            {/* Owner App */}
+            {(!isLoggedIn || currentUser?.role === 'owner') && (
+              <button
+                onClick={() => switchRole('owner')}
+                className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                  activeRole === 'owner'
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md shadow-orange-500/20'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                }`}
+              >
+                <TrendingUp className="w-4 h-4" />
+                <span className="hidden sm:inline">Owner App</span>
+              </button>
+            )}
+          </nav>
 
           {/* Right Section */}
           <div className="flex items-center space-x-2.5">

@@ -5,7 +5,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-  const [activeRole, setActiveRole] = useState(null); // null | 'clerk' | 'owner'
+  const [activeRole, setActiveRole] = useState('storefront'); // 'storefront' | 'clerk' | 'owner'
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -127,7 +127,7 @@ export const AppProvider = ({ children }) => {
   const logoutUser = () => {
     setIsLoggedIn(false);
     setCurrentUser(null);
-    setActiveRole(null);
+    setActiveRole('storefront');
     showToast('Logged out successfully');
   };
 
@@ -302,6 +302,10 @@ export const AppProvider = ({ children }) => {
   };
 
   const switchRole = (role) => {
+    if (role === 'storefront') {
+      setActiveRole('storefront');
+      return;
+    }
     if (!isLoggedIn) {
       openAuthModal('login');
       return;
