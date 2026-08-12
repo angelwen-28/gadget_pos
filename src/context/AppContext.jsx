@@ -16,6 +16,9 @@ export const AppProvider = ({ children }) => {
   const [taxRate, setTaxRate] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [amountTendered, setAmountTendered] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [customerContact, setCustomerContact] = useState('');
+  const [warranty, setWarranty] = useState('');
   
   // Modals & UI State
   const [activeModal, setActiveModal] = useState(null); // 'receipt' | 'stock' | 'cash' | 'report' | 'auth' | 'install'
@@ -263,7 +266,10 @@ export const AppProvider = ({ children }) => {
       amountTendered: parseFloat(amountTendered) || total,
       change,
       status: 'completed',
-      receiptPhotoUrl: null
+      receiptPhotoUrl: null,
+      customerName: customerName.trim() || 'Walk-in Customer',
+      customerContact: customerContact.trim() || '',
+      warranty: warranty.trim() || '',
     };
 
     try {
@@ -337,6 +343,9 @@ export const AppProvider = ({ children }) => {
 
       setSelectedTransaction(tx);
       clearCart();
+      setCustomerName('');
+      setCustomerContact('');
+      setWarranty('');
       setActiveModal('receipt');
       showToast(`Transaction ${txNo} completed!`, 'success');
     } catch (err) {
@@ -389,6 +398,12 @@ export const AppProvider = ({ children }) => {
       setPaymentMethod,
       amountTendered,
       setAmountTendered,
+      customerName,
+      setCustomerName,
+      customerContact,
+      setCustomerContact,
+      warranty,
+      setWarranty,
       subtotal,
       total,
       change,

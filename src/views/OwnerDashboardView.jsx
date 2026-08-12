@@ -7,7 +7,7 @@ import {
   Bell, FileText, Download, Eye, CheckCircle, XCircle,
   ChevronRight, Activity, Banknote, BarChart2, ShieldCheck,
   ArrowUpRight, ArrowDownRight, Home, Building2, Star,
-  Layers, MoreHorizontal, Clock, Receipt, LogOut
+  Layers, MoreHorizontal, Clock, Receipt, LogOut, Phone
 } from 'lucide-react';
 import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement,
@@ -113,6 +113,7 @@ export default function OwnerDashboardView() {
     { id: 'sales', icon: <TrendingUp className="w-5 h-5" />, label: 'Sales' },
     { id: 'alerts', icon: <Bell className="w-5 h-5" />, label: 'Alerts', badge: unreadCount },
     { id: 'approvals', icon: <ShieldCheck className="w-5 h-5" />, label: 'Approve', badge: pendingApprovals.length },
+    { id: 'customers', icon: <Users className="w-5 h-5" />, label: 'Customers' },
     { id: 'reports', icon: <FileText className="w-5 h-5" />, label: 'Reports' },
   ];
 
@@ -166,25 +167,25 @@ export default function OwnerDashboardView() {
                 </span>
               </div>
               <div className="mt-3 pt-3 border-t border-cyan-500/15 grid grid-cols-3 gap-2 text-center">
-                <div>
+                <button onClick={() => setActiveTab('sales')} className="hover:bg-cyan-500/5 rounded-xl p-1 transition active:scale-95">
                   <p className="text-base font-extrabold text-amber-400">{fmt(cashBalance)}</p>
                   <p className="text-[9px] text-slate-500 uppercase font-bold mt-0.5">Cash on Hand</p>
-                </div>
-                <div>
+                </button>
+                <button onClick={() => setActiveTab('sales')} className="hover:bg-cyan-500/5 rounded-xl p-1 transition active:scale-95">
                   <p className="text-base font-extrabold text-violet-400">{todayTxns.length}</p>
                   <p className="text-[9px] text-slate-500 uppercase font-bold mt-0.5">Transactions</p>
-                </div>
-                <div>
+                </button>
+                <button onClick={() => setActiveTab('alerts')} className="hover:bg-rose-500/5 rounded-xl p-1 transition active:scale-95">
                   <p className={`text-base font-extrabold ${lowStockItems.length > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>{lowStockItems.length}</p>
                   <p className="text-[9px] text-slate-500 uppercase font-bold mt-0.5">Low Stock</p>
-                </div>
+                </button>
               </div>
             </div>
 
             {/* Mini KPI grid */}
             <div className="grid grid-cols-2 gap-3">
-              <MiniKpi label="Est. Net Profit" value={fmt(netProfit)} sub="~22% margin" icon={<DollarSign className="w-4 h-4" />} color="emerald" />
-              <MiniKpi label="Total SKUs" value={products.length} sub={`${products.reduce((s, p) => s + p.stock, 0)} units`} icon={<Package className="w-4 h-4" />} color="violet" />
+              <MiniKpi label="Est. Net Profit" value={fmt(netProfit)} sub="~22% margin" icon={<DollarSign className="w-4 h-4" />} color="emerald" onClick={() => setActiveTab('sales')} />
+              <MiniKpi label="Total SKUs" value={products.length} sub={`${products.reduce((s, p) => s + p.stock, 0)} units`} icon={<Package className="w-4 h-4" />} color="violet" onClick={() => setActiveTab('sales')} />
             </div>
 
             {/* 7-Day Sales Chart */}
@@ -197,10 +198,10 @@ export default function OwnerDashboardView() {
             </div>
 
             {/* Payment method split */}
-            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-4">
+            <button onClick={() => setActiveTab('sales')} className="w-full bg-slate-900 rounded-2xl border border-slate-800 p-4 text-left hover:border-slate-700 transition active:scale-[0.99]">
               <p className="text-xs font-bold text-white mb-3">Payment Method Split</p>
               <div className="h-36"><Doughnut data={paymentData} options={doughnutOptions} /></div>
-            </div>
+            </button>
 
             {/* Recent transactions mini feed */}
             <div className="bg-slate-900 rounded-2xl border border-slate-800 p-4 space-y-2">
@@ -344,6 +345,95 @@ export default function OwnerDashboardView() {
         </div>
       )}
 
+      {/* ── CUSTOMERS REGISTRY ── */}
+      {activeTab === 'customers' && (
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-extrabold text-white">Customer Registry</h2>
+              <p className="text-[11px] text-slate-400 mt-0.5">Buyer history & warranty records</p>
+            </div>
+            <span className="text-[10px] font-mono text-slate-400">{transactions.filter(t => t.customerName && t.customerName !== 'Walk-in Customer').length} registered</span>
+          </div>
+
+          {transactions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
+              <div className="w-14 h-14 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
+                <Users className="w-7 h-7 text-slate-500" />
+              </div>
+              <p className="text-sm font-bold text-white">No Customers Yet</p>
+              <p className="text-xs text-slate-500">Customer info will appear here after sales are recorded at the POS.</p>
+            </div>
+          ) : (
+            transactions.map(tx => (
+              <div key={tx.id} className="bg-slate-900 rounded-2xl border border-slate-800 p-4 space-y-3 hover:border-slate-700 transition">
+                {/* Customer Header */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-cyan-500/20 to-violet-500/20 border border-slate-700 flex items-center justify-center shrink-0">
+                      <span className="text-sm font-extrabold text-cyan-400">{(tx.customerName || 'W')[0].toUpperCase()}</span>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-white">{tx.customerName || 'Walk-in Customer'}</p>
+                      <div className="flex items-center space-x-1 mt-0.5">
+                        {tx.customerContact ? (
+                          <>
+                            <Phone className="w-3 h-3 text-slate-500" />
+                            <span className="text-[10px] text-slate-400 font-mono">{tx.customerContact}</span>
+                          </>
+                        ) : (
+                          <span className="text-[10px] text-slate-600 italic">No contact info</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-sm font-extrabold text-white">{fmt(tx.total)}</span>
+                </div>
+
+                {/* Purchase Details */}
+                <div className="bg-slate-950 rounded-xl p-3 space-y-1.5 text-[11px]">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Transaction</span>
+                    <span className="text-cyan-400 font-mono font-bold">{tx.transactionNo}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Date Purchased</span>
+                    <span className="text-slate-300 font-semibold">{new Date(tx.timestamp).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Product(s)</span>
+                    <span className="text-slate-300 font-semibold text-right max-w-[55%] truncate">{(tx.items || []).map(i => i.name).join(', ')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Payment</span>
+                    <span className="text-slate-300 font-semibold">{tx.paymentMethod}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Served By</span>
+                    <span className="text-slate-300 font-semibold">{tx.clerkName}</span>
+                  </div>
+                </div>
+
+                {/* Warranty Badge */}
+                {tx.warranty ? (
+                  <div className="flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-3 py-2">
+                    <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <div>
+                      <p className="text-[10px] font-bold text-emerald-300">Warranty Coverage</p>
+                      <p className="text-[11px] text-emerald-400 font-semibold">{tx.warranty}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2 bg-slate-800/50 border border-slate-700/50 rounded-xl px-3 py-2">
+                    <span className="text-[10px] text-slate-500 italic">No warranty recorded for this sale</span>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
       {/* ── REPORTS ── */}
       {activeTab === 'reports' && (
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
@@ -437,19 +527,20 @@ export default function OwnerDashboardView() {
   );
 }
 
-function MiniKpi({ label, value, sub, icon, color }) {
+function MiniKpi({ label, value, sub, icon, color, onClick }) {
   const map = {
     emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
     violet: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
   };
+  const Wrapper = onClick ? 'button' : 'div';
   return (
-    <div className="bg-slate-900 rounded-2xl border border-slate-800 p-4 space-y-2">
+    <Wrapper onClick={onClick} className={`bg-slate-900 rounded-2xl border border-slate-800 p-4 space-y-2 w-full text-left ${onClick ? 'hover:border-slate-700 active:scale-[0.98] transition' : ''}`}>
       <div className={`w-8 h-8 rounded-xl border flex items-center justify-center ${map[color]}`}>{icon}</div>
       <div>
         <p className="text-[9px] text-slate-500 uppercase font-bold">{label}</p>
         <p className="text-base font-extrabold text-white mt-0.5">{value}</p>
         <p className="text-[10px] text-slate-500">{sub}</p>
       </div>
-    </div>
+    </Wrapper>
   );
 }

@@ -22,6 +22,9 @@ export default function ClerkPosView() {
     discount, setDiscount,
     paymentMethod, setPaymentMethod,
     amountTendered, setAmountTendered,
+    customerName, setCustomerName,
+    customerContact, setCustomerContact,
+    warranty, setWarranty,
     subtotal, total, change,
     checkoutTransaction,
     setActiveModal, showToast,
@@ -278,6 +281,37 @@ export default function ClerkPosView() {
                     <span className="text-sm font-bold text-amber-400">₱{change.toLocaleString()}</span>
                   </div>
                 )}
+
+                {/* Customer Info */}
+                <div className="space-y-2 pt-1 border-t border-slate-800">
+                  <p className="text-[9px] text-slate-500 uppercase font-bold">Customer Info (optional)</p>
+                  <div className="bg-slate-900 rounded-xl p-2.5 border border-slate-800">
+                    <p className="text-[9px] text-slate-500 uppercase font-bold mb-1">Customer Name</p>
+                    <input
+                      type="text" placeholder="Walk-in Customer"
+                      value={customerName} onChange={e => setCustomerName(e.target.value)}
+                      className="w-full bg-transparent text-sm font-semibold text-slate-200 focus:outline-none placeholder:text-slate-700"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-slate-900 rounded-xl p-2.5 border border-slate-800">
+                      <p className="text-[9px] text-slate-500 uppercase font-bold mb-1">Contact / Phone</p>
+                      <input
+                        type="text" placeholder="09xx-xxx-xxxx"
+                        value={customerContact} onChange={e => setCustomerContact(e.target.value)}
+                        className="w-full bg-transparent text-sm font-semibold text-slate-200 focus:outline-none placeholder:text-slate-700"
+                      />
+                    </div>
+                    <div className="bg-slate-900 rounded-xl p-2.5 border border-slate-800">
+                      <p className="text-[9px] text-slate-500 uppercase font-bold mb-1">Warranty</p>
+                      <input
+                        type="text" placeholder="e.g. 1 Year"
+                        value={warranty} onChange={e => setWarranty(e.target.value)}
+                        className="w-full bg-transparent text-sm font-semibold text-slate-200 focus:outline-none placeholder:text-slate-700"
+                      />
+                    </div>
+                  </div>
+                </div>
 
                 {/* Ring Up Button */}
                 <button
