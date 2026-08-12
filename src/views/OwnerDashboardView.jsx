@@ -117,7 +117,7 @@ export default function OwnerDashboardView() {
   ];
 
   return (
-    <MobileAppFrame statusLabel="Owner Remote Monitoring App" statusColor="amber">
+    <MobileAppFrame statusLabel="Owner Dashboard" statusColor="amber">
 
       {/* ── App Header with branch picker ── */}
       <div className="px-4 pt-1 pb-3 border-b border-slate-800/80 bg-slate-950">
