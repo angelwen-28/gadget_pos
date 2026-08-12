@@ -3,7 +3,6 @@ import { useApp } from '../context/AppContext';
 import { 
   Smartphone, 
   ShoppingBag, 
-  TrendingUp, 
   Shield, 
   Wifi, 
   WifiOff, 
@@ -91,21 +90,6 @@ export default function Navbar() {
                       {cart.length}
                     </span>
                   )}
-                </button>
-              )}
-
-              {/* Owner App */}
-              {currentUser?.role === 'owner' && (
-                <button
-                  onClick={() => switchRole('owner')}
-                  className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
-                    activeRole === 'owner'
-                      ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md shadow-orange-500/20'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-                  }`}
-                >
-                  <TrendingUp className="w-4 h-4" />
-                  <span className="hidden sm:inline">Owner App</span>
                 </button>
               )}
             </nav>
