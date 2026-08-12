@@ -2,27 +2,55 @@ import Dexie from 'dexie';
 
 export const db = new Dexie('GadgetPosDB');
 
-db.version(2).stores({
+db.version(1).stores({
   products: '++id, sku, name, category, brand, isSerialized, price, cost, stock',
-  serializedItems: '++id, productId, imeiSerial, status', // status: 'available', 'sold', 'defective'
+  serializedItems: '++id, productId, imeiSerial, status',
   transactions: '++id, transactionNo, timestamp, clerkId, total, paymentMethod, status',
-  cashLogs: '++id, timestamp, type, category, amount, clerkId', // type: 'in', 'out'
-  stockLogs: '++id, timestamp, type, productId, imeiSerial, quantity, clerkId', // type: 'stock_in', 'stock_out', 'return', 'defective'
-  users: '++id, email, name, role, password'
+  cashLogs: '++id, timestamp, type, category, amount, clerkId',
+  stockLogs: '++id, timestamp, type, productId, imeiSerial, quantity, clerkId',
+  users: '++id, username, name, role, pin'
 });
 
+// Version 2: migrate users from username/pin → email/password
+db.version(2).stores({
+  products: '++id, sku, name, category, brand, isSerialized, price, cost, stock',
+  serializedItems: '++id, productId, imeiSerial, status',
+  transactions: '++id, transactionNo, timestamp, clerkId, total, paymentMethod, status',
+  cashLogs: '++id, timestamp, type, category, amount, clerkId',
+  stockLogs: '++id, timestamp, type, productId, imeiSerial, quantity, clerkId',
+  users: '++id, email, name, role, password'
+}).upgrade(async tx => {
+  // Clear old pin/username user records so they get re-seeded with email/password
+  await tx.table('users').clear();
+  console.log('Upgraded users table to email/password schema');
+});
+
+const defaultUsers = [
+  { id: 1, email: 'owner@optimagadgets.com', name: 'John Barro', role: 'owner', password: 'owner1234' },
+  { id: 2, email: 'manager@optimagadgets.com', name: 'Sarah Miller', role: 'manager', password: 'manager5678' },
+  { id: 3, email: 'clerk@optimagadgets.com', name: 'Alex Cruz', role: 'clerk', password: 'clerk0000' }
+];
+
 export async function seedInitialData() {
+  // Always ensure users have the new email/password schema
+  const userCount = await db.users.count();
+  if (userCount === 0) {
+    await db.users.bulkAdd(defaultUsers);
+    console.log('Users seeded with email/password credentials');
+  } else {
+    // Check if existing users still use old schema (have pin instead of email)
+    const firstUser = await db.users.toCollection().first();
+    if (firstUser && !firstUser.email) {
+      await db.users.clear();
+      await db.users.bulkAdd(defaultUsers);
+      console.log('Migrated users from pin/username to email/password');
+    }
+  }
+
   const count = await db.products.count();
-  if (count > 0) return; // already seeded
+  if (count > 0) return; // products already seeded
 
-  console.log('Seeding initial database...');
-
-  // Users
-  await db.users.bulkAdd([
-    { id: 1, email: 'owner@optimagadgets.com', name: 'John Barro', role: 'owner', password: 'owner1234' },
-    { id: 2, email: 'manager@optimagadgets.com', name: 'Sarah Miller', role: 'manager', password: 'manager5678' },
-    { id: 3, email: 'clerk@optimagadgets.com', name: 'Alex Cruz', role: 'clerk', password: 'clerk0000' }
-  ]);
+  console.log('Seeding initial product database...');
 
   // Initial Products
   const products = [
