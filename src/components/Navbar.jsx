@@ -23,9 +23,14 @@ export default function Navbar() {
     logoutUser, 
     openAuthModal, 
     promptInstallPWA, 
+    canInstallPWA,
     isOnline, 
     cart 
   } = useApp();
+
+  // Detect if already running as installed PWA (standalone mode)
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
 
   return (
     <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800/80 shadow-lg shadow-black/20">
@@ -108,15 +113,17 @@ export default function Navbar() {
 
           {/* Right Section */}
           <div className="flex items-center space-x-2.5">
-            {/* Install App Button */}
-            <button
-              onClick={promptInstallPWA}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 text-xs font-bold transition-all shadow-sm"
-              title="Install Mobile App on device"
-            >
-              <Download className="w-3.5 h-3.5 text-emerald-400 animate-bounce" />
-              <span className="hidden md:inline">Install App</span>
-            </button>
+            {/* Install App Button — only show if not already installed and browser supports it */}
+            {!isStandalone && canInstallPWA && (
+              <button
+                onClick={promptInstallPWA}
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 text-xs font-bold transition-all shadow-sm"
+                title="Install Mobile App on device"
+              >
+                <Download className="w-3.5 h-3.5 text-emerald-400 animate-bounce" />
+                <span className="hidden md:inline">Install App</span>
+              </button>
+            )}
 
             {/* User Auth Section */}
             {isLoggedIn ? (

@@ -16,11 +16,14 @@ import { CheckCircle2, AlertCircle } from 'lucide-react';
 function MainContent() {
   const { activeRole, activeModal, notification } = useApp();
 
+  // Mobile app views (clerk/owner) get true full-screen — no navbar gap
+  const isMobileAppView = activeRole === 'clerk' || activeRole === 'owner';
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-['Plus_Jakarta_Sans',sans-serif]">
       {/* Toast Notification */}
       {notification && (
-        <div className="fixed top-20 right-6 z-50 animate-bounce">
+        <div className="fixed top-4 right-4 z-50 animate-bounce">
           <div className={`px-4 py-3 rounded-2xl shadow-2xl border flex items-center space-x-3 text-xs font-bold backdrop-blur-md ${
             notification.type === 'error'
               ? 'bg-rose-950/90 text-rose-200 border-rose-500/50 shadow-rose-950/50'
@@ -36,11 +39,11 @@ function MainContent() {
         </div>
       )}
 
-      {/* Persistent Navbar */}
-      <Navbar />
+      {/* Navbar — hidden on mobile app views to allow true full-screen */}
+      {!isMobileAppView && <Navbar />}
 
       {/* Main View Area */}
-      <main className="flex-1">
+      <main className={isMobileAppView ? 'flex-1 flex flex-col' : 'flex-1'}>
         {activeRole === 'storefront' && <StorefrontView />}
         {activeRole === 'clerk' && <ClerkPosView />}
         {activeRole === 'owner' && <OwnerDashboardView />}
