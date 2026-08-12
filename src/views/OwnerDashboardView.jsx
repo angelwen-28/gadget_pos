@@ -138,9 +138,6 @@ export default function OwnerDashboardView() {
                 </span>
               )}
             </button>
-            <button onClick={logoutUser} title="Sign Out" className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-rose-400 transition">
-              <LogOut className="w-4 h-4" />
-            </button>
           </div>
         </div>
       </div>

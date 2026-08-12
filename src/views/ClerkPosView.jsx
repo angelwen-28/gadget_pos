@@ -86,15 +86,6 @@ export default function ClerkPosView() {
               </span>
             </button>
           )}
-
-          <button
-            onClick={logoutUser}
-            title="Sign Out of POS"
-            className="p-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-rose-400 hover:border-rose-500/30 transition flex items-center space-x-1 text-[10px]"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline font-bold">Exit</span>
-          </button>
         </div>
       </div>
 
