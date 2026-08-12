@@ -8,12 +8,14 @@ export default defineConfig({
     host: true
   },
   build: {
-    chunkSizeWarningLimit: 600,
+    chunkSizeWarningLimit: 700,
     rollupOptions: {
       output: {
         manualChunks: {
           firebase: ['firebase/app', 'firebase/firestore', 'firebase/auth'],
           vendor: ['react', 'react-dom'],
+          dexie: ['dexie', 'dexie-react-hooks'],
+          charts: ['chart.js', 'react-chartjs-2'],
         }
       }
     }
