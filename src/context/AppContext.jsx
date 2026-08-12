@@ -6,9 +6,14 @@ import { initSync, startRealtimeListeners, stopRealtimeListeners, pushToFirestor
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-  const [activeRole, setActiveRole] = useState('storefront'); // 'storefront' | 'clerk' | 'owner'
-  const [currentUser, setCurrentUser] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // Restore session from localStorage (so refresh doesn't log out)
+  const savedSession = (() => {
+    try { return JSON.parse(localStorage.getItem('pos_session')); } catch { return null; }
+  })();
+
+  const [activeRole, setActiveRole] = useState(savedSession?.activeRole || 'storefront');
+  const [currentUser, setCurrentUser] = useState(savedSession?.currentUser || null);
+  const [isLoggedIn, setIsLoggedIn] = useState(savedSession?.isLoggedIn || false);
 
   // Cart State
   const [cart, setCart] = useState([]);
@@ -97,11 +102,14 @@ export const AppProvider = ({ children }) => {
         setCurrentUser(matched);
         setIsLoggedIn(true);
         // Redirect owners to owner dashboard, manager/clerk to clerk POS
-        if (matched.role === 'owner') {
-          setActiveRole('owner');
-        } else {
-          setActiveRole('clerk');
-        }
+        const role = matched.role === 'owner' ? 'owner' : 'clerk';
+        setActiveRole(role);
+        // Persist session to localStorage
+        localStorage.setItem('pos_session', JSON.stringify({
+          currentUser: matched,
+          isLoggedIn: true,
+          activeRole: role
+        }));
         setActiveModal(null);
         showToast(`Welcome back, ${matched.name}!`);
         return true;
@@ -135,7 +143,14 @@ export const AppProvider = ({ children }) => {
       const newUser = { id, name: name.trim(), email: cleanEmail, role, password };
       setCurrentUser(newUser);
       setIsLoggedIn(true);
-      setActiveRole(role === 'manager' ? 'clerk' : role);
+      const newRole = role === 'manager' ? 'clerk' : role;
+      setActiveRole(newRole);
+      // Persist session
+      localStorage.setItem('pos_session', JSON.stringify({
+        currentUser: newUser,
+        isLoggedIn: true,
+        activeRole: newRole
+      }));
       setActiveModal(null);
       showToast(`Account created! Welcome, ${newUser.name}!`);
       return true;
@@ -150,6 +165,7 @@ export const AppProvider = ({ children }) => {
     setIsLoggedIn(false);
     setCurrentUser(null);
     setActiveRole('storefront');
+    localStorage.removeItem('pos_session');
     showToast('Logged out successfully');
   };
 
