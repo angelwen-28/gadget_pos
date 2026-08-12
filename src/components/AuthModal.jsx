@@ -17,7 +17,7 @@ import {
 export default function AuthModal() {
   const { setActiveModal, loginUser, signUpUser, users, authMode } = useApp();
 
-  const [mode, setMode] = useState(users.length === 0 ? 'signup' : (authMode || 'login'));
+  const [mode, setMode] = useState(authMode || 'login');
   
   // Login Form State
   const [email, setEmail] = useState('');

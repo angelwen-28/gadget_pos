@@ -15,7 +15,7 @@ import {
 export default function MobileAuthScreen({ targetRole = 'clerk' }) {
   const { loginUser, signUpUser, users } = useApp();
 
-  const [mode, setMode] = useState(users.length === 0 ? 'signup' : 'login'); // 'login' | 'signup'
+  const [mode, setMode] = useState('login'); // 'login' | 'signup'
   
   // Login State
   const [email, setEmail] = useState('');
