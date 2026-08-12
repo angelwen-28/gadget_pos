@@ -31,23 +31,6 @@ export default function StorefrontView() {
 
   return (
     <div className="min-h-screen bg-slate-950 pb-16">
-      {/* Notice Banner explaining the storefront mode */}
-      <div className="bg-gradient-to-r from-blue-900/40 via-cyan-900/30 to-blue-900/40 border-b border-cyan-500/20 py-2.5 px-4">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between text-xs text-cyan-200 gap-2">
-          <div className="flex items-center space-x-2">
-            <Store className="w-4 h-4 text-cyan-400 shrink-0" />
-            <span><strong>Public Storefront View:</strong> Digital catalog and store locator for customers. All purchases & payments happen on-site at our store counter.</span>
-          </div>
-          <button 
-            onClick={() => openAuthModal('login')}
-            className="text-xs bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 px-3.5 py-1.5 rounded-full border border-cyan-500/30 transition font-bold flex items-center space-x-1.5 shrink-0"
-          >
-            <span>Staff & Owner Log In</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
-
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800 py-16 px-4 sm:px-6 lg:px-8">
         <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
