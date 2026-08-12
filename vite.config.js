@@ -6,5 +6,16 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true
+  },
+  build: {
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          firebase: ['firebase/app', 'firebase/firestore', 'firebase/auth'],
+          vendor: ['react', 'react-dom'],
+        }
+      }
+    }
   }
 });

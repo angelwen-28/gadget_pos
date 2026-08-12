@@ -16,8 +16,7 @@ import {
   onSnapshot,
   serverTimestamp,
   query,
-  orderBy,
-  getDoc,
+  getDocs,
   deleteDoc,
 } from 'firebase/firestore';
 import { db as firestore } from './firebase';
@@ -58,9 +57,7 @@ export async function deleteFromFirestore(collectionName, id) {
  */
 async function pullCollection(collectionName) {
   try {
-    const snap = await import('firebase/firestore').then(({ getDocs }) =>
-      getDocs(collection(firestore, collectionName))
-    );
+    const snap = await getDocs(collection(firestore, collectionName));
     const table = dexie[collectionName];
     if (!table) return;
 
