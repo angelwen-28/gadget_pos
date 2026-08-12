@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Plus, Trash2, Edit3, Save, X, Package, DollarSign, Tag, Image, ShieldAlert } from 'lucide-react';
+import { Plus, Trash2, Edit3, Save, X, Package, DollarSign, Tag, Image, ShieldAlert, Scan } from 'lucide-react';
+import BarcodeScannerModal from './BarcodeScannerModal';
 
 export default function ProductManager() {
-  const { products, addProduct, editProduct, deleteProduct } = useApp();
+  const { products, addProduct, editProduct, deleteProduct, showToast } = useApp();
   const [editingId, setEditingId] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
 
   // Form states
   const [name, setName] = useState('');
@@ -17,6 +19,67 @@ export default function ProductManager() {
   const [sku, setSku] = useState('');
   const [image, setImage] = useState('');
   const [isSerialized, setIsSerialized] = useState(false);
+
+  // Global Keyboard Wedge Barcode Scanner Listener
+  useEffect(() => {
+    let buffer = "";
+    let lastKeyTime = Date.now();
+
+    const handleKeyDown = (e) => {
+      const currentTime = Date.now();
+      
+      // If delay between keystrokes is very fast (hardware scanners send text at < 30ms intervals)
+      if (currentTime - lastKeyTime > 50) {
+        buffer = ""; // Reset if typed too slowly manually
+      }
+
+      lastKeyTime = currentTime;
+
+      if (e.key === 'Enter') {
+        if (buffer.length >= 3) {
+          const cleanCode = buffer.trim().toUpperCase();
+          const match = products.find(p => p.sku.toUpperCase() === cleanCode);
+          if (match) {
+            handleEdit(match);
+            showToast(`Scanned SKU: ${cleanCode} ✓ editing product`, 'success');
+          } else {
+            // If in form, set SKU field
+            if (isAdding || editingId) {
+              setSku(cleanCode);
+              showToast(`Scanned SKU: ${cleanCode} set as field value`, 'success');
+            } else {
+              showToast(`Scanned SKU: ${cleanCode} not found in catalog`, 'info');
+            }
+          }
+        }
+        buffer = "";
+      } else if (e.key.length === 1) {
+        buffer += e.key;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [products, isAdding, editingId]);
+
+  const handleCameraScanSuccess = (decodedSku) => {
+    const cleanCode = decodedSku.trim().toUpperCase();
+    const match = products.find(p => p.sku.toUpperCase() === cleanCode);
+    if (match) {
+      handleEdit(match);
+      showToast(`Scanned Product: ${match.name}`, 'success');
+    } else {
+      if (isAdding || editingId) {
+        setSku(cleanCode);
+        showToast(`SKU Barcode captured: ${cleanCode}`, 'success');
+      } else {
+        setIsAdding(true);
+        setSku(cleanCode);
+        showToast(`SKU ${cleanCode} not found. Pre-filling Add Form!`, 'info');
+      }
+    }
+    setShowScanner(false);
+  };
 
   const resetForm = () => {
     setName('');
@@ -85,15 +148,33 @@ export default function ProductManager() {
           <h2 className="text-sm font-extrabold text-white">Product Catalog</h2>
           <p className="text-[10px] text-slate-400 mt-0.5">Manage details, variants, prices & stock levels</p>
         </div>
-        {!isAdding && !editingId && (
+        <div className="flex items-center space-x-2">
+          {/* Camera Scanner Button */}
           <button
-            onClick={() => setIsAdding(true)}
-            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-bold flex items-center space-x-1 shadow-md shadow-cyan-500/25 active:scale-95 transition"
+            onClick={() => setShowScanner(true)}
+            className="p-2 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 hover:bg-violet-500/20 active:scale-95 transition"
+            title="Scan barcode with camera"
           >
-            <Plus className="w-4 h-4" />
-            <span>Add Product</span>
+            <Scan className="w-4 h-4" />
           </button>
-        )}
+          {!isAdding && !editingId && (
+            <button
+              onClick={() => setIsAdding(true)}
+              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-bold flex items-center space-x-1 shadow-md shadow-cyan-500/25 active:scale-95 transition"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Product</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Scanner hint bar */}
+      <div className="flex items-center space-x-2 bg-violet-500/5 border border-violet-500/15 rounded-xl px-3 py-2">
+        <Scan className="w-3.5 h-3.5 text-violet-400 shrink-0" />
+        <p className="text-[10px] text-slate-400">
+          <span className="font-bold text-violet-300">Barcode Scanner Ready</span> — Use camera button above or plug in a USB/Bluetooth scanner gun and scan any product to instantly pull it up.
+        </p>
       </div>
 
       {/* Add / Edit Form Panel */}
@@ -127,11 +208,18 @@ export default function ProductManager() {
 
             <div>
               <label className="text-[9px] uppercase font-bold text-slate-500 block mb-1">SKU Code</label>
-              <input
-                type="text" required placeholder="APL-IP16PM-512" value={sku}
-                onChange={e => setSku(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-850 rounded-xl p-2.5 text-white font-mono font-bold focus:border-cyan-500 focus:outline-none"
-              />
+              <div className="flex items-center space-x-1">
+                <input
+                  type="text" required placeholder="APL-IP16PM-512" value={sku}
+                  onChange={e => setSku(e.target.value)}
+                  className="flex-1 bg-slate-950 border border-slate-850 rounded-xl p-2.5 text-white font-mono font-bold focus:border-cyan-500 focus:outline-none"
+                />
+                <button type="button" onClick={() => setShowScanner(true)}
+                  className="p-2.5 bg-violet-500/10 border border-violet-500/20 rounded-xl text-violet-400 hover:bg-violet-500/20 shrink-0"
+                  title="Scan barcode to fill SKU">
+                  <Scan className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             <div>
@@ -252,6 +340,14 @@ export default function ProductManager() {
           </div>
         ))}
       </div>
+
+      {/* Barcode Scanner Modal */}
+      {showScanner && (
+        <BarcodeScannerModal
+          onClose={() => setShowScanner(false)}
+          onScanSuccess={handleCameraScanSuccess}
+        />
+      )}
     </div>
   );
 }

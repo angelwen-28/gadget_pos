@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MobileAppFrame from '../components/MobileAppFrame';
 import MobileAuthScreen from './MobileAuthScreen';
 import ProductManager from '../components/ProductManager';
+import BarcodeScannerModal from '../components/BarcodeScannerModal';
 import { useApp } from '../context/AppContext';
 import {
   Search, Plus, Minus, Trash2, Barcode, CreditCard, Banknote,
@@ -32,12 +33,42 @@ export default function ClerkPosView() {
     currentUser, isLoggedIn, logoutUser
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState('products'); // 'products' | 'cart' | 'stock' | 'cashlog'
+  const [activeTab, setActiveTab] = useState('products');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [imeiModal, setImeiModal] = useState(null); // { product, imeis }
+  const [imeiModal, setImeiModal] = useState(null);
+  const [showPosScanner, setShowPosScanner] = useState(false);
 
-  // Auth Guard: If not logged in as Clerk/Manager, render MobileAuthScreen inside mobile app frame
+  // Global keyboard wedge barcode scanner — works with USB/Bluetooth scanner guns
+  useEffect(() => {
+    let buffer = '';
+    let lastKeyTime = Date.now();
+    const handleKeyDown = (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+      const now = Date.now();
+      if (now - lastKeyTime > 50) buffer = '';
+      lastKeyTime = now;
+      if (e.key === 'Enter') {
+        if (buffer.length >= 3) {
+          const code = buffer.trim().toUpperCase();
+          const match = products.find(p => p.sku.toUpperCase() === code);
+          if (match) {
+            handleProductTap(match);
+            showToast(`Scanned: ${match.name} added to cart`, 'success');
+          } else {
+            showToast(`SKU ${code} not found in catalog`, 'error');
+          }
+        }
+        buffer = '';
+      } else if (e.key.length === 1) {
+        buffer += e.key;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [products]);
+
+  // Auth Guard
   if (!isLoggedIn || (currentUser.role !== 'clerk' && currentUser.role !== 'manager')) {
     return <MobileAuthScreen targetRole="clerk" />;
   }
@@ -71,6 +102,7 @@ export default function ClerkPosView() {
   }
 
   return (
+    <>
     <MobileAppFrame statusLabel="Counter POS Terminal — Clerk Mode" statusColor="cyan">
       {/* App Header */}
       <div className="px-4 pt-1 pb-3 flex items-center justify-between bg-slate-950 border-b border-slate-800/80">
@@ -100,17 +132,26 @@ export default function ClerkPosView() {
       {/* ── PRODUCTS SCREEN ── */}
       {activeTab === 'products' && (
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Search */}
+          {/* Search + Camera Scanner */}
           <div className="px-4 py-2.5 bg-slate-950">
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search model, SKU, IMEI..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-800 rounded-2xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
-              />
+            <div className="flex items-center space-x-2">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search model, SKU, IMEI..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-800 rounded-2xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                />
+              </div>
+              <button
+                onClick={() => setShowPosScanner(true)}
+                className="p-2.5 bg-violet-500/10 border border-violet-500/20 rounded-2xl text-violet-400 hover:bg-violet-500/20 shrink-0 active:scale-95 transition"
+                title="Scan barcode to add to cart"
+              >
+                <Barcode className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
@@ -403,6 +444,24 @@ export default function ClerkPosView() {
         </div>
       )}
     </MobileAppFrame>
+
+      {/* POS Camera Barcode Scanner Modal */}
+      {showPosScanner && (
+        <BarcodeScannerModal
+          onClose={() => setShowPosScanner(false)}
+          onScanSuccess={(code) => {
+            const match = products.find(p => p.sku.toUpperCase() === code.trim().toUpperCase());
+            if (match) {
+              handleProductTap(match);
+              showToast(`Scanned: ${match.name} added to cart`, 'success');
+            } else {
+              showToast(`SKU "${code}" not found in catalog`, 'error');
+            }
+            setShowPosScanner(false);
+          }}
+        />
+      )}
+  </>
   );
 }
 

@@ -16,6 +16,7 @@ export default defineConfig({
           vendor: ['react', 'react-dom'],
           dexie: ['dexie', 'dexie-react-hooks'],
           charts: ['chart.js', 'react-chartjs-2'],
+          scanner: ['html5-qrcode'],
         }
       }
     }
