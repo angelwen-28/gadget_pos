@@ -49,6 +49,18 @@ export const AppProvider = ({ children }) => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [canInstallPWA, setCanInstallPWA] = useState(false);
 
+  // Dynamic state for Notifications (Alerts) and Approvals
+  const [notifications, setNotifications] = useState([
+    { id: 1, emoji: '💰', title: 'Big Sale Alert', body: 'Samsung Galaxy S24 Ultra sold — ₱74,990', time: '2h ago', read: false },
+    { id: 2, emoji: '⚠️', title: 'Low Stock Warning', body: 'iPhone 15 Pro: only 2 units left — restock soon', time: '4h ago', read: false },
+    { id: 3, emoji: '📊', title: 'End-of-Day Summary', body: 'Yesterday total: ₱92,880 · 5 transactions', time: '1d ago', read: true },
+    { id: 4, emoji: '👤', title: 'Clerk Login', body: 'Alex Cruz started shift at 8:02 AM', time: '2d ago', read: true },
+  ]);
+  const [pendingApprovals, setPendingApprovals] = useState([
+    { id: 1, type: 'Void Request', txNo: 'TX-20260811-002', clerk: 'Alex Cruz', amount: 69440, reason: 'Customer changed mind — wants different storage variant' },
+    { id: 2, type: 'Large Discount', txNo: 'TX-NEW-005', clerk: 'Sarah Miller', amount: 2500, reason: 'Loyal customer request' },
+  ]);
+
   // Live queries from Dexie
   const products = useLiveQuery(() => db.products.toArray(), []) || [];
   const transactions = useLiveQuery(() => db.transactions.orderBy('timestamp').reverse().toArray(), []) || [];
@@ -535,6 +547,10 @@ export const AppProvider = ({ children }) => {
         console.warn('Firestore reset partial error:', fe);
       }
 
+      // Clear alerts and approvals state
+      setNotifications([]);
+      setPendingApprovals([]);
+
       // Re-seed default data
       await seedInitialData(true);
       await seedDefaultUsers();
@@ -630,7 +646,11 @@ export const AppProvider = ({ children }) => {
       setSelectedTransaction,
       notification,
       showToast,
-      isOnline
+      isOnline,
+      notifications,
+      setNotifications,
+      pendingApprovals,
+      setPendingApprovals
     }}>
       {children}
     </AppContext.Provider>

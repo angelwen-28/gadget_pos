@@ -35,7 +35,8 @@ export default function OwnerDashboardView() {
     products, transactions, cashLogs,
     setActiveModal, setSelectedTransaction,
     showToast, currentUser, isLoggedIn, logoutUser,
-    resetDatabase
+    resetDatabase, notifications, setNotifications,
+    pendingApprovals, setPendingApprovals
   } = useApp();
 
   // Auth Guard: must be logged in as owner or manager
@@ -52,16 +53,6 @@ export default function OwnerDashboardView() {
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState('');
   const [isResetting, setIsResetting] = useState(false);
-  const [notifications, setNotifications] = useState([
-    { id: 1, emoji: '💰', title: 'Big Sale Alert', body: 'Samsung Galaxy S24 Ultra sold — ₱74,990', time: '2h ago', read: false },
-    { id: 2, emoji: '⚠️', title: 'Low Stock Warning', body: 'iPhone 15 Pro: only 2 units left — restock soon', time: '4h ago', read: false },
-    { id: 3, emoji: '📊', title: 'End-of-Day Summary', body: 'Yesterday total: ₱92,880 · 5 transactions', time: '1d ago', read: true },
-    { id: 4, emoji: '👤', title: 'Clerk Login', body: 'Alex Cruz started shift at 8:02 AM', time: '2d ago', read: true },
-  ]);
-  const [pendingApprovals, setPendingApprovals] = useState([
-    { id: 1, type: 'Void Request', txNo: 'TX-20260811-002', clerk: 'Alex Cruz', amount: 69440, reason: 'Customer changed mind — wants different storage variant' },
-    { id: 2, type: 'Large Discount', txNo: 'TX-NEW-005', clerk: 'Sarah Miller', amount: 2500, reason: 'Loyal customer request' },
-  ]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
