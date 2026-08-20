@@ -31,16 +31,27 @@ const BRANCHES = [
 const BRANCH_SALES = { main: null, branch2: 48200, branch3: 11900 };
 
 export default function OwnerDashboardView() {
-  const { products, transactions, cashLogs, setActiveModal, setSelectedTransaction, showToast, currentUser, isLoggedIn, logoutUser } = useApp();
+  const {
+    products, transactions, cashLogs,
+    setActiveModal, setSelectedTransaction,
+    showToast, currentUser, isLoggedIn, logoutUser,
+    resetDatabase
+  } = useApp();
 
-  // Auth Guard: If not logged in as Owner, render MobileAuthScreen inside mobile app frame
-  if (!isLoggedIn || currentUser.role !== 'owner') {
-    return <MobileAuthScreen targetRole="owner" />;
+  // Auth Guard: must be logged in as owner or manager
+  if (!isLoggedIn || (currentUser.role !== 'owner' && currentUser.role !== 'manager')) {
+    return <MobileAuthScreen targetRole={currentUser?.role === 'manager' ? 'manager' : 'owner'} />;
   }
+
+  const isOwner = currentUser.role === 'owner';
+  const isManager = currentUser.role === 'manager';
 
   const [activeTab, setActiveTab] = useState('home');
   const [selectedBranch, setSelectedBranch] = useState('main');
   const [showBranchPicker, setShowBranchPicker] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
   const [notifications, setNotifications] = useState([
     { id: 1, emoji: '💰', title: 'Big Sale Alert', body: 'Samsung Galaxy S24 Ultra sold — ₱74,990', time: '2h ago', read: false },
     { id: 2, emoji: '⚠️', title: 'Low Stock Warning', body: 'iPhone 15 Pro: only 2 units left — restock soon', time: '4h ago', read: false },
@@ -110,19 +121,31 @@ export default function OwnerDashboardView() {
   const approveAction = id => { setPendingApprovals(p => p.filter(a => a.id !== id)); showToast('Approved remotely ✓', 'success'); };
   const rejectAction = id => { setPendingApprovals(p => p.filter(a => a.id !== id)); showToast('Rejected — clerk notified', 'success'); };
 
-  const bottomTabs = [
-    { id: 'home', icon: <Home className="w-5 h-5" />, label: 'Dashboard' },
-    { id: 'sales', icon: <TrendingUp className="w-5 h-5" />, label: 'Sales' },
-    { id: 'catalog', icon: <Package className="w-5 h-5" />, label: 'Catalog' },
-    { id: 'storefront_mgmt', icon: <Store className="w-5 h-5" />, label: 'Web Store' },
-    { id: 'alerts', icon: <Bell className="w-5 h-5" />, label: 'Alerts', badge: unreadCount },
-    { id: 'approvals', icon: <ShieldCheck className="w-5 h-5" />, label: 'Approve', badge: pendingApprovals.length },
-    { id: 'customers', icon: <Users className="w-5 h-5" />, label: 'Customers' },
-    { id: 'reports', icon: <FileText className="w-5 h-5" />, label: 'Reports' },
+  const handleResetDatabase = async () => {
+    if (resetConfirmText !== 'RESET') return;
+    setIsResetting(true);
+    await resetDatabase();
+    setIsResetting(false);
+    setShowResetModal(false);
+    setResetConfirmText('');
+  };
+
+  // RBAC-filtered bottom tabs
+  const allTabs = [
+    { id: 'home',            icon: <Home className="w-5 h-5" />,       label: 'Dashboard',  roles: ['owner','manager'] },
+    { id: 'sales',           icon: <TrendingUp className="w-5 h-5" />, label: 'Sales',      roles: ['owner','manager'] },
+    { id: 'catalog',         icon: <Package className="w-5 h-5" />,    label: 'Catalog',    roles: ['owner','manager'] },
+    { id: 'storefront_mgmt', icon: <Store className="w-5 h-5" />,      label: 'Web Store',  roles: ['owner','manager'] },
+    { id: 'alerts',          icon: <Bell className="w-5 h-5" />,        label: 'Alerts',     roles: ['owner','manager'], badge: unreadCount },
+    { id: 'approvals',       icon: <ShieldCheck className="w-5 h-5" />,label: 'Approve',    roles: ['owner','manager'], badge: pendingApprovals.length },
+    { id: 'customers',       icon: <Users className="w-5 h-5" />,       label: 'Customers',  roles: ['owner','manager'] },
+    { id: 'reports',         icon: <FileText className="w-5 h-5" />,   label: 'Reports',    roles: ['owner','manager'] },
+    { id: 'settings',        icon: <ShieldCheck className="w-5 h-5" />,label: 'Settings',   roles: ['owner'] },
   ];
+  const bottomTabs = allTabs.filter(t => t.roles.includes(currentUser.role));
 
   return (
-    <MobileAppFrame statusLabel="Owner Dashboard" statusColor="amber">
+    <MobileAppFrame statusLabel={isOwner ? 'Owner Dashboard' : 'Manager Dashboard'} statusColor={isOwner ? 'amber' : 'violet'}>
 
       {/* ── App Header with branch picker ── */}
       <div className="px-4 pt-1 pb-3 border-b border-slate-800/80 bg-slate-950">
@@ -486,6 +509,77 @@ export default function OwnerDashboardView() {
           <StorefrontManagementPanel />
         </div>
       )}
+      {/* ── SETTINGS SCREEN ── */}
+      {activeTab === 'settings' && isOwner && (
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+          <div>
+            <h2 className="text-sm font-extrabold text-white">System Settings</h2>
+            <p className="text-[11px] text-slate-400 mt-0.5">Global configuration and system maintenance</p>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4">
+            <h3 className="text-xs font-bold text-rose-500 uppercase tracking-wider">Danger Zone</h3>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Resetting the database will selectively truncate all visual counter fields, transactional history records, inventory pricing/quantities, custom web storefront settings, active alert logs, and customer profiles. This operation will synchronize immediately to all active devices.
+            </p>
+            <button
+              onClick={() => setShowResetModal(true)}
+              className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition active:scale-95 flex items-center justify-center space-x-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Reset Database Fields</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Confirmation Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => !isResetting && setShowResetModal(false)} />
+          <div className="relative bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
+            <div className="text-center">
+              <span className="inline-block p-3 rounded-full bg-rose-500/10 text-rose-500 mb-2">
+                <AlertTriangle className="w-6 h-6" />
+              </span>
+              <h3 className="text-sm font-extrabold text-white">Reset Module Fields?</h3>
+              <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                This will wipe Catalog fields, Web Store customizations, Alert lists, approvals, customers, and report databases. Type <span className="font-extrabold text-rose-400">RESET</span> to confirm.
+              </p>
+            </div>
+
+            <input
+              type="text"
+              value={resetConfirmText}
+              onChange={(e) => setResetConfirmText(e.target.value)}
+              placeholder="Type RESET"
+              className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3 py-2.5 text-xs text-white text-center focus:outline-none focus:border-rose-500 font-extrabold tracking-widest placeholder:font-normal placeholder:tracking-normal"
+              disabled={isResetting}
+            />
+
+            <div className="flex space-x-2 pt-2">
+              <button
+                onClick={() => { setShowResetModal(false); setResetConfirmText(''); }}
+                className="flex-1 bg-slate-850 hover:bg-slate-800 text-slate-400 font-bold py-2 rounded-xl text-xs transition"
+                disabled={isResetting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleResetDatabase}
+                disabled={resetConfirmText !== 'RESET' || isResetting}
+                className={`flex-1 font-bold py-2 rounded-xl text-xs transition flex items-center justify-center space-x-1.5 ${
+                  resetConfirmText === 'RESET' && !isResetting
+                    ? 'bg-rose-600 text-white hover:bg-rose-700 active:scale-95'
+                    : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                }`}
+              >
+                {isResetting ? 'Resetting...' : 'Confirm Reset'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Navigation */}
       <div className="shrink-0 border-t border-slate-800 bg-slate-950 px-1 pb-1 overflow-x-auto scrollbar-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
@@ -493,7 +587,9 @@ export default function OwnerDashboardView() {
           {bottomTabs.map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
               className={`w-14 flex-none flex flex-col items-center py-3 space-y-0.5 relative transition ${
-                activeTab === tab.id ? 'text-amber-400' : 'text-slate-600 hover:text-slate-400'
+                activeTab === tab.id
+                  ? (isOwner ? 'text-amber-400' : 'text-violet-400')
+                  : 'text-slate-600 hover:text-slate-400'
               }`}>
               {tab.icon}
               <span className="text-[8px] font-bold">{tab.label}</span>
@@ -503,7 +599,7 @@ export default function OwnerDashboardView() {
                 </span>
               )}
               {activeTab === tab.id && (
-                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full bg-amber-400" />
+                <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full ${isOwner ? 'bg-amber-400' : 'bg-violet-400'}`} />
               )}
             </button>
           ))}

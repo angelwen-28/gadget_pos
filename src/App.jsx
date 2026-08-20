@@ -16,8 +16,8 @@ import { CheckCircle2, AlertCircle } from 'lucide-react';
 function MainContent() {
   const { activeRole, activeModal, notification } = useApp();
 
-  // Mobile app views (clerk/owner) get true full-screen — no navbar gap
-  const isMobileAppView = activeRole === 'clerk' || activeRole === 'owner';
+  // Mobile app views get true full-screen — no navbar gap
+  const isMobileAppView = activeRole === 'clerk' || activeRole === 'owner' || activeRole === 'manager';
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-['Plus_Jakarta_Sans',sans-serif]">
@@ -47,6 +47,7 @@ function MainContent() {
         {activeRole === 'storefront' && <StorefrontView />}
         {activeRole === 'clerk' && <ClerkPosView />}
         {activeRole === 'owner' && <OwnerDashboardView />}
+        {activeRole === 'manager' && <OwnerDashboardView />}
       </main>
 
       {/* Modals */}

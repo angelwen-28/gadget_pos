@@ -74,7 +74,7 @@ export default function Navbar() {
                 <span className="hidden sm:inline">Storefront</span>
               </button>
 
-              {/* Counter POS */}
+              {/* Counter POS — clerk, manager, owner */}
               {(currentUser?.role === 'clerk' || currentUser?.role === 'manager' || currentUser?.role === 'owner') && (
                 <button
                   onClick={() => switchRole('clerk')}
@@ -94,7 +94,22 @@ export default function Navbar() {
                 </button>
               )}
 
-              {/* Owner App */}
+              {/* Manager App — manager role */}
+              {currentUser?.role === 'manager' && (
+                <button
+                  onClick={() => switchRole('manager')}
+                  className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                    activeRole === 'manager'
+                      ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-md shadow-violet-500/20'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                  }`}
+                >
+                  <TrendingUp className="w-4 h-4" />
+                  <span className="hidden sm:inline">Manager App</span>
+                </button>
+              )}
+
+              {/* Owner App — owner role only */}
               {currentUser?.role === 'owner' && (
                 <button
                   onClick={() => switchRole('owner')}

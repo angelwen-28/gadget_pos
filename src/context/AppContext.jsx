@@ -122,8 +122,8 @@ export const AppProvider = ({ children }) => {
       if (matched) {
         setCurrentUser(matched);
         setIsLoggedIn(true);
-        // Redirect owners to owner dashboard, manager/clerk to clerk POS
-        const role = matched.role === 'owner' ? 'owner' : 'clerk';
+        // Redirect by role: owner → owner dashboard, manager → manager dashboard, clerk → POS
+        const role = matched.role === 'owner' ? 'owner' : matched.role === 'manager' ? 'manager' : 'clerk';
         setActiveRole(role);
         // Persist session to localStorage
         localStorage.setItem('pos_session', JSON.stringify({
@@ -504,6 +504,53 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const resetDatabase = async () => {
+    try {
+      // Stop real-time listeners during reset
+      stopRealtimeListeners();
+
+      // Clear ALL local Dexie tables
+      await db.products.clear();
+      await db.serializedItems.clear();
+      await db.transactions.clear();
+      await db.cashLogs.clear();
+      await db.stockLogs.clear();
+      await db.announcements.clear();
+      await db.storeSettings.clear();
+      await db.deletedIds.clear();
+      // Keep users so login still works
+
+      // Clear Firestore collections (products, transactions, cashLogs, stockLogs, announcements, storeSettings)
+      try {
+        const { db: firestore } = await import('../db/firebase');
+        const { collection, getDocs, deleteDoc, doc } = await import('firebase/firestore');
+        const collectionsToReset = ['products', 'transactions', 'cashLogs', 'stockLogs', 'announcements', 'storeSettings', 'stockLogs'];
+        for (const col of collectionsToReset) {
+          const snap = await getDocs(collection(firestore, col));
+          for (const d of snap.docs) {
+            await deleteDoc(doc(firestore, col, d.id));
+          }
+        }
+      } catch (fe) {
+        console.warn('Firestore reset partial error:', fe);
+      }
+
+      // Re-seed default data
+      await seedInitialData();
+      await seedDefaultUsers();
+
+      // Restart real-time listeners
+      startRealtimeListeners();
+
+      showToast('Database reset successfully!', 'success');
+      return true;
+    } catch (err) {
+      console.error(err);
+      showToast('Error resetting database', 'error');
+      return false;
+    }
+  };
+
   const switchRole = (role) => {
     if (role === 'storefront') {
       setActiveRole('storefront');
@@ -511,6 +558,15 @@ export const AppProvider = ({ children }) => {
     }
     if (!isLoggedIn) {
       openAuthModal('login');
+      return;
+    }
+    // RBAC: clerk cannot navigate to owner/manager dashboards
+    if (role === 'owner' && currentUser?.role !== 'owner') {
+      showToast('Access restricted to Owner only', 'error');
+      return;
+    }
+    if (role === 'manager' && currentUser?.role !== 'manager' && currentUser?.role !== 'owner') {
+      showToast('Access restricted to Manager or Owner', 'error');
       return;
     }
     setActiveRole(role);
@@ -567,6 +623,7 @@ export const AppProvider = ({ children }) => {
       editAnnouncement,
       deleteAnnouncement,
       updateStoreSetting,
+      resetDatabase,
       activeModal,
       setActiveModal,
       selectedTransaction,
