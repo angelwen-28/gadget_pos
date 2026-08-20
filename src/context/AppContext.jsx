@@ -536,7 +536,7 @@ export const AppProvider = ({ children }) => {
       }
 
       // Re-seed default data
-      await seedInitialData();
+      await seedInitialData(true);
       await seedDefaultUsers();
 
       // Restart real-time listeners

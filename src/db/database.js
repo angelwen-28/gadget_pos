@@ -50,7 +50,7 @@ db.version(4).stores({
   deletedIds: 'id, collection, deletedAt'
 });
 
-export async function seedInitialData() {
+export async function seedInitialData(isReset = false) {
   // Seed default store settings
   const settingsCount = await db.storeSettings.count();
   if (settingsCount === 0) {
@@ -94,6 +94,12 @@ export async function seedInitialData() {
       }
     ];
     await db.announcements.bulkAdd(defaultAnnouncements);
+  }
+
+  // If resetting, do not seed mock transaction history, products, or cash float!
+  if (isReset) {
+    console.log('Database reset: skipping initial product and transaction seed.');
+    return;
   }
 
   const count = await db.products.count();
