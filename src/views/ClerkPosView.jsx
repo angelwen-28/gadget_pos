@@ -69,7 +69,7 @@ export default function ClerkPosView() {
   }, [products]);
 
   // Auth Guard
-  if (!isLoggedIn || (currentUser.role !== 'clerk' && currentUser.role !== 'manager')) {
+  if (!isLoggedIn || (currentUser.role !== 'clerk' && currentUser.role !== 'manager' && currentUser.role !== 'owner')) {
     return <MobileAuthScreen targetRole="clerk" />;
   }
 
