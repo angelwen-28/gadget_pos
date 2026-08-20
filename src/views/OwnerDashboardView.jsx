@@ -488,11 +488,11 @@ export default function OwnerDashboardView() {
       )}
 
       {/* Bottom Navigation */}
-      <div className="shrink-0 border-t border-slate-800 bg-slate-950 px-1 pb-1">
-        <div className="flex">
+      <div className="shrink-0 border-t border-slate-800 bg-slate-950 px-1 pb-1 overflow-x-auto scrollbar-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div className="flex min-w-max">
           {bottomTabs.map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex flex-col items-center py-3 space-y-0.5 relative transition ${
+              className={`w-14 flex-none flex flex-col items-center py-3 space-y-0.5 relative transition ${
                 activeTab === tab.id ? 'text-amber-400' : 'text-slate-600 hover:text-slate-400'
               }`}>
               {tab.icon}
