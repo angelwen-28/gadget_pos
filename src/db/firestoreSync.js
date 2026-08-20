@@ -23,25 +23,27 @@ import { db as firestore } from './firebase';
 import { db as dexie } from './database';
 
 // Collections to sync
-const COLLECTIONS = ['products', 'transactions', 'cashLogs', 'stockLogs', 'users'];
+// Collections to sync
+const COLLECTIONS = ['products', 'transactions', 'cashLogs', 'stockLogs', 'users', 'announcements', 'storeSettings'];
 
 let unsubscribers = [];
 
 /**
  * Push a single Dexie record to Firestore.
- * Uses the local Dexie id as the Firestore document id.
+ * Uses the local Dexie id or key as the Firestore document id.
  */
 export async function pushToFirestore(collectionName, record) {
   try {
-    const docRef = doc(firestore, collectionName, String(record.id));
+    const docId = record.id !== undefined ? String(record.id) : String(record.key);
+    const docRef = doc(firestore, collectionName, docId);
     await setDoc(docRef, { ...record, _syncedAt: serverTimestamp() }, { merge: true });
   } catch (err) {
-    console.warn(`[Sync] Failed to push ${collectionName}/${record.id}:`, err.message);
+    console.warn(`[Sync] Failed to push ${collectionName}/${record.id || record.key}:`, err.message);
   }
 }
 
 /**
- * Delete a Firestore document by collection + id.
+ * Delete a Firestore document by collection + id/key.
  */
 export async function deleteFromFirestore(collectionName, id) {
   try {
@@ -53,7 +55,7 @@ export async function deleteFromFirestore(collectionName, id) {
 
 /**
  * Pull all Firestore records into Dexie on startup.
- * Only inserts records that don't already exist locally (by id).
+ * Only inserts records that don't already exist locally (by id/key).
  */
 async function pullCollection(collectionName) {
   try {
@@ -63,7 +65,8 @@ async function pullCollection(collectionName) {
 
     for (const docSnap of snap.docs) {
       const data = docSnap.data();
-      const existing = await table.get(data.id);
+      const lookupKey = data.id !== undefined ? data.id : data.key;
+      const existing = await table.get(lookupKey);
       if (!existing) {
         await table.put(data);
       }
@@ -111,7 +114,8 @@ export function startRealtimeListeners() {
         if (change.type === 'added' || change.type === 'modified') {
           await table.put(data);
         } else if (change.type === 'removed') {
-          await table.delete(data.id);
+          const deleteKey = data.id !== undefined ? data.id : data.key;
+          await table.delete(deleteKey);
         }
       });
     }, (err) => {

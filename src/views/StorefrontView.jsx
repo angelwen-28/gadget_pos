@@ -16,9 +16,13 @@ import {
 } from 'lucide-react';
 
 export default function StorefrontView() {
-  const { products, switchRole, openAuthModal } = useApp();
+  const { products, switchRole, openAuthModal, announcements = [], storeSettings = {} } = useApp();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+
+  const getSetting = (key, fallback) => {
+    return storeSettings[key] !== undefined ? storeSettings[key] : fallback;
+  };
 
   const categories = ['All', 'Smartphones', 'Charging & Power', 'Audio', 'Cases & Protection'];
 
@@ -44,11 +48,13 @@ export default function StorefrontView() {
             </div>
             
             <h1 className="text-4xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
-              Your Trusted Store for <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-500">Premium Gadgets</span> & Mobile Accessories
+              Your Trusted Store for <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-500">{getSetting('storeName', 'Optima Gadgets')}</span>
             </h1>
             
-            <p className="mt-4 text-slate-300 text-base leading-relaxed">
-              Explore authentic smartphones, fast power chargers, noise-canceling headphones, and protective cases. Visit our store location for physical test units, trade-ins, and instant warranty support.
+            <p className="text-cyan-300 text-xs font-bold mt-2 tracking-wide uppercase">{getSetting('storeTagline', 'Premium Gadgets & Mobile Accessories')}</p>
+            
+            <p className="mt-4 text-slate-300 text-sm leading-relaxed">
+              {getSetting('storeDescription', 'Explore authentic smartphones, fast power chargers, noise-canceling headphones, and protective cases. Visit our store location for physical test units, trade-ins, and instant warranty support.')}
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4">
@@ -87,44 +93,42 @@ export default function StorefrontView() {
 
           </div>
 
-          {/* Featured Device Showcase */}
+          {/* Featured Device Showcase — live from catalog */}
           <div className="relative">
             <div className="relative rounded-2xl bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 p-6 border border-slate-700/80 shadow-2xl">
               <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
                 <div>
                   <span className="text-xs font-bold text-cyan-400 tracking-wider uppercase">In Stock Counter Display</span>
-                  <h3 className="text-lg font-bold text-white">iPhone 15 Pro & S24 Ultra</h3>
+                  <h3 className="text-lg font-bold text-white">Featured Products</h3>
                 </div>
                 <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold rounded-full">
                   Ready for Pickup
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="group relative rounded-xl bg-slate-950/80 p-3 border border-slate-800 overflow-hidden">
-                  <img 
-                    src="https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400&auto=format&fit=crop&q=80" 
-                    alt="iPhone 15 Pro"
-                    className="w-full h-36 object-cover rounded-lg group-hover:scale-105 transition duration-300"
-                  />
-                  <div className="mt-2">
-                    <p className="text-xs font-bold text-slate-200">iPhone 15 Pro 256GB</p>
-                    <p className="text-sm font-extrabold text-cyan-400">₱68,990</p>
-                  </div>
+              {products.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center space-y-2">
+                  <Store className="w-10 h-10 text-slate-600" />
+                  <p className="text-sm font-bold text-slate-400">No Products Yet</p>
+                  <p className="text-xs text-slate-600">The owner/manager will add products soon.</p>
                 </div>
-
-                <div className="group relative rounded-xl bg-slate-950/80 p-3 border border-slate-800 overflow-hidden">
-                  <img 
-                    src="https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&auto=format&fit=crop&q=80" 
-                    alt="Samsung S24 Ultra"
-                    className="w-full h-36 object-cover rounded-lg group-hover:scale-105 transition duration-300"
-                  />
-                  <div className="mt-2">
-                    <p className="text-xs font-bold text-slate-200">Galaxy S24 Ultra 512GB</p>
-                    <p className="text-sm font-extrabold text-cyan-400">₱74,990</p>
-                  </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  {products.slice(0, 2).map(p => (
+                    <div key={p.id} className="group relative rounded-xl bg-slate-950/80 p-3 border border-slate-800 overflow-hidden">
+                      <img
+                        src={p.image || 'https://images.unsplash.com/photo-1546054454-aa26e2b734c7?w=400'}
+                        alt={p.name}
+                        className="w-full h-36 object-cover rounded-lg group-hover:scale-105 transition duration-300"
+                      />
+                      <div className="mt-2">
+                        <p className="text-xs font-bold text-slate-200 line-clamp-1">{p.name}</p>
+                        <p className="text-sm font-extrabold text-cyan-400">₱{p.price.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              )}
 
               <div className="mt-4 p-3 rounded-xl bg-cyan-950/40 border border-cyan-800/40 text-center">
                 <p className="text-xs text-cyan-300">
@@ -135,6 +139,45 @@ export default function StorefrontView() {
           </div>
         </div>
       </section>
+
+      {/* Sales, Events & Promos Section */}
+      {announcements.filter(ann => ann.isActive).length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12">
+          <div className="flex items-center space-x-2 mb-6">
+            <span className="w-2.5 h-2.5 rounded-full bg-cyan-500 animate-ping shrink-0"></span>
+            <h2 className="text-lg font-extrabold text-white tracking-tight">Active Store Sales & Events</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {announcements.filter(ann => ann.isActive).map(ann => (
+              <div key={ann.id} className="relative group rounded-3xl overflow-hidden bg-slate-900 border border-slate-800 p-6 flex flex-col sm:flex-row gap-5 hover:border-cyan-500/30 transition duration-300">
+                {ann.image && (
+                  <div className="w-full sm:w-36 h-28 rounded-2xl overflow-hidden shrink-0 border border-slate-800 bg-slate-950">
+                    <img src={ann.image} alt={ann.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                  </div>
+                )}
+                <div className="flex-1 flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-extrabold uppercase border ${
+                        ann.type === 'sale' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
+                      }`}>
+                        {ann.type}
+                      </span>
+                      {ann.discountTag && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                          {ann.discountTag}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-sm font-bold text-white leading-tight">{ann.title}</h3>
+                    <p className="text-xs text-slate-400 leading-relaxed">{ann.content}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Catalog Search & Display Section */}
       <section id="catalog" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12">
@@ -164,8 +207,8 @@ export default function StorefrontView() {
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-                    selectedCategory === cat 
-                      ? 'bg-cyan-600 text-white shadow-sm' 
+                    selectedCategory === cat
+                      ? 'bg-cyan-600 text-white shadow-sm'
                       : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -177,56 +220,72 @@ export default function StorefrontView() {
         </div>
 
         {/* Product Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredProducts.map(product => (
-            <div 
-              key={product.id}
-              className="group bg-slate-900/90 rounded-2xl border border-slate-800/80 p-4 hover:border-slate-700 transition-all duration-200 shadow-lg flex flex-col justify-between"
-            >
-              <div>
-                <div className="relative overflow-hidden rounded-xl bg-slate-950 mb-4 h-44 flex items-center justify-center">
-                  <img 
-                    src={product.image} 
-                    alt={product.name}
-                    className="h-full w-full object-cover group-hover:scale-105 transition duration-300"
-                  />
-                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-slate-900/80 backdrop-blur border border-slate-700 text-[10px] font-semibold text-slate-300">
-                    {product.brand}
-                  </div>
-                  {product.stock > 0 ? (
-                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/30 text-[10px] font-bold text-emerald-400">
-                      {product.stock} In Stock
-                    </div>
-                  ) : (
-                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-rose-500/20 border border-rose-500/30 text-[10px] font-bold text-rose-400">
-                      Sold Out
-                    </div>
-                  )}
-                </div>
-
-                <div className="mb-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">{product.category}</span>
-                  <h3 className="text-sm font-bold text-white line-clamp-1 group-hover:text-cyan-300 transition">{product.name}</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">{product.variant}</p>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] text-slate-400 uppercase font-semibold">Store Price</p>
-                  <p className="text-base font-extrabold text-white">₱{product.price.toLocaleString()}</p>
-                </div>
-
-                <a 
-                  href="#location"
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 text-xs font-semibold transition flex items-center space-x-1"
-                >
-                  <span>Buy On-Site</span>
-                </a>
-              </div>
+        {filteredProducts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
+              <Store className="w-8 h-8 text-slate-500" />
             </div>
-          ))}
-        </div>
+            <p className="text-base font-bold text-white">
+              {products.length === 0 ? 'No Products Added Yet' : 'No Products Match Your Search'}
+            </p>
+            <p className="text-sm text-slate-500 max-w-sm">
+              {products.length === 0
+                ? 'The store owner or manager will add products to the catalog soon. Check back shortly!'
+                : 'Try a different category or search keyword.'}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {filteredProducts.map(product => (
+              <div
+                key={product.id}
+                className="group bg-slate-900/90 rounded-2xl border border-slate-800/80 p-4 hover:border-slate-700 transition-all duration-200 shadow-lg flex flex-col justify-between"
+              >
+                <div>
+                  <div className="relative overflow-hidden rounded-xl bg-slate-950 mb-4 h-44 flex items-center justify-center">
+                    <img
+                      src={product.image || 'https://images.unsplash.com/photo-1546054454-aa26e2b734c7?w=400'}
+                      alt={product.name}
+                      className="h-full w-full object-cover group-hover:scale-105 transition duration-300"
+                    />
+                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-slate-900/80 backdrop-blur border border-slate-700 text-[10px] font-semibold text-slate-300">
+                      {product.brand}
+                    </div>
+                    {product.stock > 0 ? (
+                      <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/30 text-[10px] font-bold text-emerald-400">
+                        {product.stock} In Stock
+                      </div>
+                    ) : (
+                      <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-rose-500/20 border border-rose-500/30 text-[10px] font-bold text-rose-400">
+                        Sold Out
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mb-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">{product.category}</span>
+                    <h3 className="text-sm font-bold text-white line-clamp-1 group-hover:text-cyan-300 transition">{product.name}</h3>
+                    <p className="text-xs text-slate-400 mt-0.5">{product.variant || product.brand}</p>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] text-slate-400 uppercase font-semibold">Store Price</p>
+                    <p className="text-base font-extrabold text-white">₱{product.price.toLocaleString()}</p>
+                  </div>
+
+                  <a
+                    href="#location"
+                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 text-xs font-semibold transition flex items-center space-x-1"
+                  >
+                    <span>Buy On-Site</span>
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Location, Contact & Operating Hours Section */}
@@ -251,7 +310,7 @@ export default function StorefrontView() {
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-white">Main Retail Branch</h4>
-                    <p className="text-xs text-slate-300">Ground Floor, Cyberzone Building, Main Commercial Ave, Metro Manila</p>
+                    <p className="text-xs text-slate-300">{getSetting('storeBranch', 'Ground Floor, Cyberzone Building, Main Commercial Ave, Metro Manila')}</p>
                   </div>
                 </div>
 
@@ -261,7 +320,7 @@ export default function StorefrontView() {
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-white">Store Operating Hours</h4>
-                    <p className="text-xs text-slate-300">Monday – Sunday: 10:00 AM – 9:00 PM</p>
+                    <p className="text-xs text-slate-300">{getSetting('storeHours', 'Monday – Sunday: 10:00 AM – 9:00 PM')}</p>
                     <p className="text-[11px] text-emerald-400 font-semibold mt-0.5">● Open Today</p>
                   </div>
                 </div>
@@ -272,7 +331,7 @@ export default function StorefrontView() {
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-white">Inquiries & Stock Check</h4>
-                    <p className="text-xs text-slate-300">Hotline: (02) 8923-4567 | Mobile: +63 917 123 4567</p>
+                    <p className="text-xs text-slate-300">{getSetting('storeHotline', 'Hotline: (02) 8923-4567 | Mobile: +63 917 123 4567')}</p>
                   </div>
                 </div>
               </div>
@@ -280,7 +339,7 @@ export default function StorefrontView() {
               {/* Direct Messenger/Viber Contact CTAs */}
               <div className="pt-4 flex flex-wrap gap-3">
                 <a 
-                  href="https://messenger.com" 
+                  href={getSetting('messengerLink', 'https://messenger.com')} 
                   target="_blank" 
                   rel="noreferrer"
                   className="flex-1 py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold text-center transition flex items-center justify-center space-x-2"
@@ -290,7 +349,7 @@ export default function StorefrontView() {
                 </a>
 
                 <a 
-                  href="tel:+639171234567" 
+                  href={`tel:${getSetting('storeHotline', '0289234567').replace(/[^0-9+]/g, '')}`} 
                   className="flex-1 py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold text-center border border-slate-700 transition flex items-center justify-center space-x-2"
                 >
                   <Phone className="w-4 h-4 text-cyan-400" />
@@ -308,11 +367,11 @@ export default function StorefrontView() {
                 <div className="w-12 h-12 rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center mx-auto mb-3">
                   <MapPin className="w-6 h-6 animate-bounce" />
                 </div>
-                <h3 className="text-base font-bold text-white">Optima Gadgets Store Map</h3>
-                <p className="text-xs text-slate-400 mt-1">Ground Floor Cyberzone, Main Commercial Ave, Metro Manila</p>
+                <h3 className="text-base font-bold text-white">{getSetting('storeName', 'Optima Gadgets')} Store Map</h3>
+                <p className="text-xs text-slate-400 mt-1">{getSetting('storeBranch', 'Ground Floor Cyberzone, Main Commercial Ave, Metro Manila')}</p>
                 
                 <a 
-                  href="https://maps.google.com" 
+                  href={getSetting('mapUrl', 'https://maps.google.com')} 
                   target="_blank" 
                   rel="noreferrer"
                   className="mt-4 inline-flex items-center space-x-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold rounded-xl transition"

@@ -8,7 +8,8 @@ import {
   Bell, FileText, Download, Eye, CheckCircle, XCircle,
   ChevronRight, Activity, Banknote, BarChart2, ShieldCheck,
   ArrowUpRight, ArrowDownRight, Home, Building2, Star,
-  Layers, MoreHorizontal, Clock, Receipt, LogOut, Phone
+  Layers, MoreHorizontal, Clock, Receipt, LogOut, Phone,
+  Store, Trash2, Plus, Edit3, Save, Share2
 } from 'lucide-react';
 import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement,
@@ -113,6 +114,7 @@ export default function OwnerDashboardView() {
     { id: 'home', icon: <Home className="w-5 h-5" />, label: 'Dashboard' },
     { id: 'sales', icon: <TrendingUp className="w-5 h-5" />, label: 'Sales' },
     { id: 'catalog', icon: <Package className="w-5 h-5" />, label: 'Catalog' },
+    { id: 'storefront_mgmt', icon: <Store className="w-5 h-5" />, label: 'Web Store' },
     { id: 'alerts', icon: <Bell className="w-5 h-5" />, label: 'Alerts', badge: unreadCount },
     { id: 'approvals', icon: <ShieldCheck className="w-5 h-5" />, label: 'Approve', badge: pendingApprovals.length },
     { id: 'customers', icon: <Users className="w-5 h-5" />, label: 'Customers' },
@@ -471,6 +473,20 @@ export default function OwnerDashboardView() {
         <ProductManager />
       )}
 
+      {/* ── STOREFRONT MANAGEMENT SCREEN ── */}
+      {activeTab === 'storefront_mgmt' && (
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+          <div className="flex items-between justify-between">
+            <div>
+              <h2 className="text-sm font-extrabold text-white">Storefront Customization</h2>
+              <p className="text-[11px] text-slate-400 mt-0.5">Customize web store details, branding, events & sales</p>
+            </div>
+          </div>
+          
+          <StorefrontManagementPanel />
+        </div>
+      )}
+
       {/* Bottom Navigation */}
       <div className="shrink-0 border-t border-slate-800 bg-slate-950 px-1 pb-1">
         <div className="flex">
@@ -549,5 +565,378 @@ function MiniKpi({ label, value, sub, icon, color, onClick }) {
         <p className="text-[10px] text-slate-500">{sub}</p>
       </div>
     </Wrapper>
+  );
+}
+
+function StorefrontManagementPanel() {
+  const { 
+    announcements, 
+    storeSettings, 
+    addAnnouncement, 
+    editAnnouncement, 
+    deleteAnnouncement, 
+    updateStoreSetting 
+  } = useApp();
+
+  const [subTab, setSubTab] = useState('settings'); // 'settings' | 'announcements'
+
+  // Settings states
+  const [storeName, setStoreName] = useState(storeSettings?.storeName || 'Optima Gadgets');
+  const [storeTagline, setStoreTagline] = useState(storeSettings?.storeTagline || 'Premium Gadgets & Mobile Accessories');
+  const [storeDescription, setStoreDescription] = useState(storeSettings?.storeDescription || '');
+  const [storeBranch, setStoreBranch] = useState(storeSettings?.storeBranch || '');
+  const [storeHours, setStoreHours] = useState(storeSettings?.storeHours || '');
+  const [storeHotline, setStoreHotline] = useState(storeSettings?.storeHotline || '');
+  const [messengerLink, setMessengerLink] = useState(storeSettings?.messengerLink || '');
+  const [mapUrl, setMapUrl] = useState(storeSettings?.mapUrl || '');
+
+  // Announcements states
+  const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [type, setType] = useState('sale');
+  const [discountTag, setDiscountTag] = useState('');
+  const [image, setImage] = useState('');
+
+  const handleSaveSettings = async (e) => {
+    e.preventDefault();
+    await updateStoreSetting('storeName', storeName);
+    await updateStoreSetting('storeTagline', storeTagline);
+    await updateStoreSetting('storeDescription', storeDescription);
+    await updateStoreSetting('storeBranch', storeBranch);
+    await updateStoreSetting('storeHours', storeHours);
+    await updateStoreSetting('storeHotline', storeHotline);
+    await updateStoreSetting('messengerLink', messengerLink);
+    await updateStoreSetting('mapUrl', mapUrl);
+  };
+
+  const handleAddAnnouncement = async (e) => {
+    e.preventDefault();
+    if (!title.trim() || !content.trim()) return;
+
+    if (editingId) {
+      const success = await editAnnouncement(editingId, {
+        title: title.trim(),
+        content: content.trim(),
+        type,
+        discountTag: discountTag.trim(),
+        image: image.trim() || 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=600'
+      });
+      if (success) {
+        setEditingId(null);
+        resetAnnouncementForm();
+      }
+    } else {
+      const success = await addAnnouncement({
+        title: title.trim(),
+        content: content.trim(),
+        type,
+        discountTag: discountTag.trim(),
+        image: image.trim() || 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=600',
+        isActive: 1
+      });
+      if (success) {
+        setIsAdding(false);
+        resetAnnouncementForm();
+      }
+    }
+  };
+
+  const resetAnnouncementForm = () => {
+    setTitle('');
+    setContent('');
+    setType('sale');
+    setDiscountTag('');
+    setImage('');
+  };
+
+  const startEdit = (ann) => {
+    setEditingId(ann.id);
+    setTitle(ann.title);
+    setContent(ann.content);
+    setType(ann.type || 'sale');
+    setDiscountTag(ann.discountTag || '');
+    setImage(ann.image || '');
+    setIsAdding(true);
+  };
+
+  return (
+    <div className="space-y-4 pb-16">
+      {/* Sub tabs */}
+      <div className="flex space-x-2 p-1 bg-slate-950 rounded-xl border border-slate-800">
+        <button
+          type="button"
+          onClick={() => setSubTab('settings')}
+          className={`flex-1 py-2 text-xs font-semibold rounded-lg transition ${
+            subTab === 'settings' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          Store Details
+        </button>
+        <button
+          type="button"
+          onClick={() => setSubTab('announcements')}
+          className={`flex-1 py-2 text-xs font-semibold rounded-lg transition ${
+            subTab === 'announcements' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          Sales & Events
+        </button>
+      </div>
+
+      {subTab === 'settings' && (
+        <form onSubmit={handleSaveSettings} className="space-y-4 bg-slate-900 p-4 rounded-2xl border border-slate-800">
+          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Configure Web Storefront</h3>
+          
+          <div className="space-y-3 text-xs">
+            <div>
+              <label className="block text-slate-400 font-semibold mb-1">Store Name</label>
+              <input 
+                type="text" 
+                value={storeName} 
+                onChange={e => setStoreName(e.target.value)} 
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-400 font-semibold mb-1">Store Tagline</label>
+              <input 
+                type="text" 
+                value={storeTagline} 
+                onChange={e => setStoreTagline(e.target.value)} 
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-400 font-semibold mb-1">Store Description (Hero Section)</label>
+              <textarea 
+                value={storeDescription} 
+                onChange={e => setStoreDescription(e.target.value)} 
+                rows="3"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500 resize-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-400 font-semibold mb-1">Main Retail Branch Address</label>
+              <input 
+                type="text" 
+                value={storeBranch} 
+                onChange={e => setStoreBranch(e.target.value)} 
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-400 font-semibold mb-1">Store Operating Hours</label>
+              <input 
+                type="text" 
+                value={storeHours} 
+                onChange={e => setStoreHours(e.target.value)} 
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-400 font-semibold mb-1">Inquiries & Hotline Number</label>
+              <input 
+                type="text" 
+                value={storeHotline} 
+                onChange={e => setStoreHotline(e.target.value)} 
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-400 font-semibold mb-1">Facebook Messenger URL</label>
+              <input 
+                type="text" 
+                value={messengerLink} 
+                onChange={e => setMessengerLink(e.target.value)} 
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-400 font-semibold mb-1">Google Maps Share Link</label>
+              <input 
+                type="text" 
+                value={mapUrl} 
+                onChange={e => setMapUrl(e.target.value)} 
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500"
+              />
+            </div>
+          </div>
+
+          <button 
+            type="submit"
+            className="w-full mt-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs flex items-center justify-center space-x-1.5 transition active:scale-[0.98]"
+          >
+            <Save className="w-4 h-4" />
+            <span>Save Store Details</span>
+          </button>
+        </form>
+      )}
+
+      {subTab === 'announcements' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Promo Announcements</h3>
+            <button
+              type="button"
+              onClick={() => { resetAnnouncementForm(); setEditingId(null); setIsAdding(!isAdding); }}
+              className="py-1.5 px-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg text-[10px] font-bold flex items-center space-x-1 transition"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>{isAdding ? 'Cancel' : 'New Promo'}</span>
+            </button>
+          </div>
+
+          {isAdding && (
+            <form onSubmit={handleAddAnnouncement} className="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-3 text-xs">
+              <h4 className="font-bold text-slate-200">{editingId ? 'Edit Announcement' : 'Create Promo Announcement'}</h4>
+              
+              <div>
+                <label className="block text-slate-400 font-semibold mb-1">Banner Title</label>
+                <input 
+                  type="text" 
+                  value={title} 
+                  onChange={e => setTitle(e.target.value)} 
+                  placeholder="e.g. Back to School Blowout"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 font-semibold mb-1">Content / Details</label>
+                <textarea 
+                  value={content} 
+                  onChange={e => setContent(e.target.value)} 
+                  placeholder="Details about the event, discount, dates, etc."
+                  rows="3"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500 resize-none"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">Badge Tag</label>
+                  <input 
+                    type="text" 
+                    value={discountTag} 
+                    onChange={e => setDiscountTag(e.target.value)} 
+                    placeholder="e.g. 15% OFF, LIVE DEMO"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">Type</label>
+                  <select
+                    value={type}
+                    onChange={e => setType(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500"
+                  >
+                    <option value="sale">Sale Event</option>
+                    <option value="event">Promo Event</option>
+                    <option value="alert">Critical Announcement</option>
+                    <option value="general">General Notice</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-400 font-semibold mb-1">Banner Image URL</label>
+                <input 
+                  type="text" 
+                  value={image} 
+                  onChange={e => setImage(e.target.value)} 
+                  placeholder="https://images.unsplash.com/... (optional)"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <button 
+                type="submit"
+                className="w-full mt-2 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition"
+              >
+                {editingId ? 'Save Changes' : 'Publish Announcement'}
+              </button>
+            </form>
+          )}
+
+          <div className="space-y-3">
+            {announcements.length === 0 ? (
+              <p className="text-xs text-slate-500 text-center py-6">No promo announcements posted yet.</p>
+            ) : (
+              announcements.map(ann => (
+                <div key={ann.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 relative overflow-hidden">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-extrabold uppercase border ${
+                          ann.type === 'sale' ? 'bg-rose-500/10 text-rose-400 border-rose-500/25' :
+                          ann.type === 'event' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/25' :
+                          'bg-slate-800 text-slate-400 border-slate-700'
+                        }`}>
+                          {ann.type}
+                        </span>
+                        {ann.discountTag && (
+                          <span className="text-[9px] bg-amber-500/10 text-amber-400 border border-amber-500/25 px-1.5 py-0.5 rounded font-extrabold">
+                            {ann.discountTag}
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          className={`text-[9px] px-1.5 py-0.5 rounded font-bold transition cursor-pointer border ${
+                            ann.isActive ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-slate-850 text-slate-500 border-slate-800'
+                          }`}
+                          onClick={() => editAnnouncement(ann.id, { isActive: ann.isActive ? 0 : 1 })}
+                        >
+                          {ann.isActive ? '● Active' : '○ Inactive'}
+                        </button>
+                      </div>
+                      <h4 className="text-xs font-bold text-white mt-1">{ann.title}</h4>
+                      <p className="text-[11px] text-slate-400 leading-normal">{ann.content}</p>
+                    </div>
+                  </div>
+
+                  {ann.image && (
+                    <div className="w-full h-20 rounded-xl overflow-hidden bg-slate-950 border border-slate-800">
+                      <img src={ann.image} alt={ann.title} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => startEdit(ann)}
+                      className="p-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-400 hover:text-white transition"
+                      title="Edit"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteAnnouncement(ann.id)}
+                      className="p-1.5 rounded-lg bg-rose-950/20 border border-rose-900/30 text-rose-400 hover:bg-rose-950/40 transition"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

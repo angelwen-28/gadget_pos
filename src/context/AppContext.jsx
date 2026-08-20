@@ -15,6 +15,19 @@ export const AppProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(savedSession?.currentUser || null);
   const [isLoggedIn, setIsLoggedIn] = useState(savedSession?.isLoggedIn || false);
 
+  // Sync session state to localStorage
+  useEffect(() => {
+    if (isLoggedIn && currentUser) {
+      localStorage.setItem('pos_session', JSON.stringify({
+        currentUser,
+        isLoggedIn,
+        activeRole
+      }));
+    } else {
+      localStorage.removeItem('pos_session');
+    }
+  }, [currentUser, isLoggedIn, activeRole]);
+
   // Cart State
   const [cart, setCart] = useState([]);
   const [discount, setDiscount] = useState(0);
@@ -43,6 +56,14 @@ export const AppProvider = ({ children }) => {
   const stockLogs = useLiveQuery(() => db.stockLogs.orderBy('timestamp').reverse().toArray(), []) || [];
   const serializedItems = useLiveQuery(() => db.serializedItems.toArray(), []) || [];
   const users = useLiveQuery(() => db.users.toArray(), []) || [];
+  const announcements = useLiveQuery(() => db.announcements.toArray(), []) || [];
+  const rawStoreSettings = useLiveQuery(() => db.storeSettings.toArray(), []) || [];
+
+  // Convert rawStoreSettings list to a lookup map
+  const storeSettings = rawStoreSettings.reduce((acc, curr) => {
+    acc[curr.key] = curr.value;
+    return acc;
+  }, {});
 
   useEffect(() => {
     seedInitialData();
@@ -419,6 +440,68 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const addAnnouncement = async (announcementData) => {
+    try {
+      const timestamp = new Date().toISOString();
+      const record = { ...announcementData, timestamp };
+      const id = await db.announcements.add(record);
+      const newRecord = { ...record, id };
+      pushToFirestore('announcements', newRecord);
+      showToast(`Announcement/Event "${announcementData.title}" created!`, 'success');
+      return true;
+    } catch (err) {
+      console.error(err);
+      showToast('Error creating announcement', 'error');
+      return false;
+    }
+  };
+
+  const editAnnouncement = async (id, updatedData) => {
+    try {
+      await db.announcements.update(id, updatedData);
+      const record = await db.announcements.get(id);
+      pushToFirestore('announcements', record);
+      showToast('Announcement/Event updated!', 'success');
+      return true;
+    } catch (err) {
+      console.error(err);
+      showToast('Error updating announcement', 'error');
+      return false;
+    }
+  };
+
+  const deleteAnnouncement = async (id) => {
+    try {
+      await db.announcements.delete(id);
+      try {
+        const { db: firestore } = await import('../db/firebase');
+        const { doc, deleteDoc } = await import('firebase/firestore');
+        await deleteDoc(doc(firestore, 'announcements', id.toString()));
+      } catch (fe) {
+        console.warn("Could not sync deletion to Firestore:", fe);
+      }
+      showToast('Announcement/Event deleted!', 'success');
+      return true;
+    } catch (err) {
+      console.error(err);
+      showToast('Error deleting announcement', 'error');
+      return false;
+    }
+  };
+
+  const updateStoreSetting = async (key, value) => {
+    try {
+      await db.storeSettings.put({ key, value });
+      pushToFirestore('storeSettings', { key, value });
+      showToast('Store settings updated!', 'success');
+      return true;
+    } catch (err) {
+      console.error(err);
+      showToast('Error updating settings', 'error');
+      return false;
+    }
+  };
+
   const switchRole = (role) => {
     if (role === 'storefront') {
       setActiveRole('storefront');
@@ -476,6 +559,12 @@ export const AppProvider = ({ children }) => {
       addProduct,
       editProduct,
       deleteProduct,
+      announcements,
+      storeSettings,
+      addAnnouncement,
+      editAnnouncement,
+      deleteAnnouncement,
+      updateStoreSetting,
       activeModal,
       setActiveModal,
       selectedTransaction,

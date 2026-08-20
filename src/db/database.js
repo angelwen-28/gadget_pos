@@ -25,7 +25,64 @@ db.version(2).stores({
   console.log('Upgraded users table to email/password schema');
 });
 
+// Version 3: storefront settings and announcements
+db.version(3).stores({
+  products: '++id, sku, name, category, brand, isSerialized, price, cost, stock',
+  serializedItems: '++id, productId, imeiSerial, status',
+  transactions: '++id, transactionNo, timestamp, clerkId, total, paymentMethod, status',
+  cashLogs: '++id, timestamp, type, category, amount, clerkId',
+  stockLogs: '++id, timestamp, type, productId, imeiSerial, quantity, clerkId',
+  users: '++id, email, name, role, password',
+  announcements: '++id, title, content, type, discountTag, image, isActive, timestamp',
+  storeSettings: 'key, value'
+});
+
 export async function seedInitialData() {
+  // Seed default store settings
+  const settingsCount = await db.storeSettings.count();
+  if (settingsCount === 0) {
+    const defaultSettings = [
+      { key: 'storeName', value: 'Optima Gadgets' },
+      { key: 'storeTagline', value: 'Premium Gadgets & Mobile Accessories' },
+      { key: 'storeDescription', value: 'Explore authentic smartphones, fast power chargers, noise-canceling headphones, and protective cases. Visit our store location for physical test units, trade-ins, and instant warranty support.' },
+      { key: 'storeBranch', value: 'Ground Floor, Cyberzone Building, Main Commercial Ave, Metro Manila' },
+      { key: 'storeHours', value: 'Monday – Sunday: 10:00 AM – 9:00 PM' },
+      { key: 'storeHotline', value: '(02) 8923-4567 | Mobile: +63 917 123 4567' },
+      { key: 'messengerLink', value: 'https://messenger.com' },
+      { key: 'mapUrl', value: 'https://maps.google.com' },
+      { key: 'logoUrl', value: '/logo.png' }
+    ];
+    await db.storeSettings.bulkAdd(defaultSettings);
+  }
+
+  // Seed default announcements
+  const announcementsCount = await db.announcements.count();
+  if (announcementsCount === 0) {
+    const defaultAnnouncements = [
+      {
+        id: 1,
+        title: 'Grand Opening Extravaganza!',
+        content: 'Get up to 20% off on all selected premium accessories and power banks. Visit us in-store today to test demo units!',
+        type: 'sale',
+        discountTag: '20% OFF',
+        image: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=600&auto=format&fit=crop&q=80',
+        isActive: 1,
+        timestamp: new Date().toISOString()
+      },
+      {
+        id: 2,
+        title: 'iPhone 15 Pro Experience Week',
+        content: 'Check out the new titanium design, experience the action button, and get custom screen protectors installed instantly.',
+        type: 'event',
+        discountTag: 'LIVE DEMO',
+        image: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=600&auto=format&fit=crop&q=80',
+        isActive: 1,
+        timestamp: new Date().toISOString()
+      }
+    ];
+    await db.announcements.bulkAdd(defaultAnnouncements);
+  }
+
   const count = await db.products.count();
   if (count > 0) return; // products already seeded
 
