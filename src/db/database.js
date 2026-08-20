@@ -37,6 +37,19 @@ db.version(3).stores({
   storeSettings: 'key, value'
 });
 
+// Version 4: tombstone deleted product IDs so Firestore sync doesn't re-add them
+db.version(4).stores({
+  products: '++id, sku, name, category, brand, isSerialized, price, cost, stock',
+  serializedItems: '++id, productId, imeiSerial, status',
+  transactions: '++id, transactionNo, timestamp, clerkId, total, paymentMethod, status',
+  cashLogs: '++id, timestamp, type, category, amount, clerkId',
+  stockLogs: '++id, timestamp, type, productId, imeiSerial, quantity, clerkId',
+  users: '++id, email, name, role, password',
+  announcements: '++id, title, content, type, discountTag, image, isActive, timestamp',
+  storeSettings: 'key, value',
+  deletedIds: 'id, collection, deletedAt'
+});
+
 export async function seedInitialData() {
   // Seed default store settings
   const settingsCount = await db.storeSettings.count();

@@ -421,9 +421,11 @@ export const AppProvider = ({ children }) => {
 
   const deleteProduct = async (id) => {
     try {
-      const prod = await db.products.get(id);
+      // Record tombstone so Firestore pull won't re-add this product
+      await db.deletedIds.put({ id: String(id), collection: 'products', deletedAt: new Date().toISOString() });
+      // Delete locally
       await db.products.delete(id);
-      // In Firestore sync we can delete or update
+      // Delete from Firestore
       try {
         const { db: firestore } = await import('../db/firebase');
         const { doc, deleteDoc } = await import('firebase/firestore');

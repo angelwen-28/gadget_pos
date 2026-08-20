@@ -66,6 +66,13 @@ async function pullCollection(collectionName) {
     for (const docSnap of snap.docs) {
       const data = docSnap.data();
       const lookupKey = data.id !== undefined ? data.id : data.key;
+
+      // Skip records that were intentionally deleted locally (tombstone check)
+      const tombstone = await dexie.deletedIds
+        .where({ id: String(lookupKey), collection: collectionName })
+        .first();
+      if (tombstone) continue;
+
       const existing = await table.get(lookupKey);
       if (!existing) {
         await table.put(data);
