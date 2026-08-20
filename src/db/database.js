@@ -51,6 +51,13 @@ db.version(4).stores({
 });
 
 export async function seedInitialData(isReset = false) {
+  // Check if already seeded/initialized to prevent re-seeding on reload
+  const isInitialized = await db.storeSettings.get('databaseSeeded');
+  if (isInitialized && !isReset) {
+    console.log('Database already initialized. Skipping startup seed.');
+    return;
+  }
+
   // Seed default store settings
   const settingsCount = await db.storeSettings.count();
   if (settingsCount === 0) {
@@ -95,6 +102,9 @@ export async function seedInitialData(isReset = false) {
     ];
     await db.announcements.bulkAdd(defaultAnnouncements);
   }
+
+  // Mark database as initialized/seeded
+  await db.storeSettings.put({ key: 'databaseSeeded', value: 'true' });
 
   // If resetting, do not seed mock transaction history, products, or cash float!
   if (isReset) {
